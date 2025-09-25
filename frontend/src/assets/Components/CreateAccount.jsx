@@ -1,8 +1,9 @@
+import { Link } from "react-router-dom"
 
 export default function CreateAccount(){
     return(
         <div className="bg-gradient-to-br from-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[15vh]">
-            <div className="bg-[#F0F0F0] rounded-3xl w-[365px] h-[490px] flex flex-col justify-center p-4">
+            <div className="bg-[#F0F0F0] rounded-3xl w-[365px] h-[500px] flex flex-col justify-center p-4">
                 <h2 className="text-center bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-violet-400 text-2xl"><strong>Join Collaboration Hub</strong></h2>
 
                 <p className="text-[#000000] text-center">Create your account now.</p>
@@ -53,8 +54,14 @@ export default function CreateAccount(){
 
                 <div className="flex flex-row text-xs justify-center py-2">
                     <p className="text-[#000000]">Already have an account? </p>
-                    <p className="text-violet-400"> Sign the Collaboration Hub</p>
+                    <Link to={"/login-page"}>
+                        <p className="text-violet-400"> Sign the Collaboration Hub</p>
+                    </Link>
                 </div>
+
+                <hr className="text-[#000000]"/>
+
+                <p className="text-xs text-gray-400 text-center pt-2">"Where ideas are Shared and Transformed."</p>
 
             </div>
         </div>

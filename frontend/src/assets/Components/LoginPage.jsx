@@ -1,4 +1,4 @@
-
+import { Link } from "react-router-dom"
 
 export default function LoginPage(){
     return(
@@ -22,7 +22,7 @@ export default function LoginPage(){
                     <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8" placeholder=" Enter your Password"></input>
                 </div>
 
-                <div className="flex flex-row justify-between pb-8">
+                <div className="flex flex-row justify-between pb-8 pt-2">
                     <div className="flex flex-row">
                         <input className="" type="checkbox"></input>
                         <p className="text-[#000000] pl-2 inline">Remember Me</p>
@@ -34,7 +34,9 @@ export default function LoginPage(){
 
                 <div className="flex flex-row text-xs justify-center py-4">
                     <p className="text-[#000000]">Don't have an account?</p>
-                    <p className="text-orange-300">Join the Collaboration Hub</p>
+                    <Link to={"/"}>
+                        <p className="text-orange-300">Join the Collaboration Hub</p>
+                    </Link>
                 </div>
 
                 <hr className="text-[#000000]"/>
