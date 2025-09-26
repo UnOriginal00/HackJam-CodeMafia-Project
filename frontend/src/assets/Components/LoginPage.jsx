@@ -4,7 +4,7 @@ import MainLogo from "../Icons/MainLogo.svg"
 export default function LoginPage(){
     return(
     <>
-        <div className="bg-gradient-to-br from-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[15vh]">
+        <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[15vh]">
             <div className="bg-[#F0F0F0] rounded-3xl w-[350px] h-[530px] flex flex-col justify-center p-4 font-[Krub]">
 
                 <div className="w-full flex justify-center pt-1">
