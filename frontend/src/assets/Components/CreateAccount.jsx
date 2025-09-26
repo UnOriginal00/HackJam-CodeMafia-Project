@@ -4,7 +4,7 @@ import MainLogo from "../Icons/MainLogo.svg"
 export default function CreateAccount(){
     return(
         <div className="bg-gradient-to-br from-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[12vh]">
-            <div className="bg-[#F0F0F0] rounded-3xl w-[365px] h-[565px] flex flex-col justify-center p-4">
+            <div className="bg-[#F0F0F0] rounded-3xl w-[365px] h-[580px] flex flex-col justify-center p-4 font-[Krub]">
 
                 <div className="w-full flex justify-center">
                     <img className="size-16" src={MainLogo}></img>
@@ -58,7 +58,7 @@ export default function CreateAccount(){
 
                 <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000]">Create Account</button>
 
-                <div className="flex flex-row text-xs justify-center py-2">
+                <div className="flex flex-row text-xs justify-center py-3">
                     <p className="text-[#000000]">Already have an account? </p>
                     <Link to={"/login-page"}>
                         <p className="text-violet-400"> Sign the Collaboration Hub</p>
