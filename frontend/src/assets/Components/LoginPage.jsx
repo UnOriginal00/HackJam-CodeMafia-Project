@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom"
+import MainLogo from "../Icons/MainLogo.svg"
 
 export default function LoginPage(){
     return(
     <>
         <div className="bg-gradient-to-br from-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[15vh]">
-            <div className="bg-[#F0F0F0] rounded-3xl w-[350px] h-[475px] flex flex-col justify-center p-4">
+            <div className="bg-[#F0F0F0] rounded-3xl w-[350px] h-[530px] flex flex-col justify-center p-4">
 
+                <div className="w-full flex justify-center pt-1">
+                    <img className="size-16" src={MainLogo}></img>
+                </div>
+                
                 <h2 className="text-center bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-violet-400 text-2xl"><strong>Collaboration Hub</strong></h2>
 
                 <p className="text-[#000000] text-center">Welcome back! Sign in to<br/>access your collaboration<br/>workspace.</p>
