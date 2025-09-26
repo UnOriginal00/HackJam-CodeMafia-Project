@@ -18,36 +18,36 @@ export default function CreateAccount(){
 
                     <div className="flex flex-col">
                         <p className="text-[#000000]">First Name</p>
-                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-[83%]"></input>
+                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-[83%] pl-2"></input>
                     </div>
 
                     <div className="flex flex-col">
                         <p className="text-[#000000]">Surname</p>
-                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full"></input>
+                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2"></input>
                     </div>
 
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Phone Number</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2"></input>
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Email Address</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full" type="email"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="email"></input>
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Password</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full" type="password"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="password"></input>
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Confirm Password</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full" type="password"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="password"></input>
                 </div>
-
+ 
                 <div className="flex flex-row text-xs justify-center py-2">
                     <input type="checkbox"></input>
                     <p className="text-[#000000]">I agree to the</p>
@@ -56,7 +56,7 @@ export default function CreateAccount(){
                     <p className="text-violet-400">Privacy Policy</p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000]">Create Account</button>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8"><div className="text-xs">Create Account</div></button>
 
                 <div className="flex flex-row text-xs justify-center py-3">
                     <p className="text-[#000000]">Already have an account? </p>

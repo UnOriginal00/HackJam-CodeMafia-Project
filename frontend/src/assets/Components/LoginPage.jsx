@@ -18,13 +18,13 @@ export default function LoginPage(){
                 {/*Email section*/}
                 <div className="py-2">
                     <p className="text-[#000000]">Email Address</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8" placeholder=" Enter your Email" autoFocus></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" placeholder=" Enter your Email" autoFocus></input>
                 </div>
 
                 {/*Password section*/}
                 <div className="pt-2 pb-1.5">
                     <p className="text-[#000000]">Password</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8" placeholder=" Enter your Password"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" placeholder=" Enter your Password"></input>
                 </div>
 
                 <div className="flex flex-row justify-between pb-8 pt-2">
@@ -35,7 +35,7 @@ export default function LoginPage(){
                     <p className="text-violet-400"><u>Forgot Password?</u></p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000]">Sign In</button>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000]"><div className="text-sm">Sign In</div></button>
 
                 <div className="flex flex-row text-xs justify-center py-4">
                     <p className="text-[#000000]">Don't have an account?</p>
