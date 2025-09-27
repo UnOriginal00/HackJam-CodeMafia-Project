@@ -1,7 +1,15 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import MainLogo from "../Icons/MainLogo.svg"
+import Arrow from "../Icons/Arrow.svg"
 
 export default function LoginPage(){
+
+    const route = useNavigate();
+
+    const switchPage = () => {
+    route("/home-page");
+    };
+
     return(
     <>
         <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[15vh]">
@@ -24,7 +32,7 @@ export default function LoginPage(){
                 {/*Password section*/}
                 <div className="pt-2 pb-1.5">
                     <p className="text-[#000000]">Password</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" placeholder=" Enter your Password"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" placeholder=" Enter your Password" type="password"></input>
                 </div>
 
                 <div className="flex flex-row justify-between pb-8 pt-2">
@@ -35,7 +43,9 @@ export default function LoginPage(){
                     <p className="text-violet-400"><u>Forgot Password?</u></p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000]"><div className="text-sm">Sign In</div></button>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000]" onClick={switchPage}>
+                    <div className="text-sm flex flex-row justify-center">Sign In <img className="size-5 pt-0.5 pl-1.5" src={Arrow}/></div>
+                </button>
 
                 <div className="flex flex-row text-xs justify-center py-4">
                     <p className="text-[#000000]">Don't have an account?</p>

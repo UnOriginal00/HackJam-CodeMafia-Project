@@ -1,7 +1,15 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import MainLogo from "../Icons/MainLogo.svg"
+import Arrow from "../Icons/Arrow.svg"
 
 export default function CreateAccount(){
+
+    const route = useNavigate();
+
+    const switchPage = () => {
+        route("/home-page");
+    };
+
     return(
         <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[12vh]">
             <div className="bg-[#F0F0F0] rounded-3xl w-[365px] h-[580px] flex flex-col justify-center p-4 font-[Krub]">
@@ -10,7 +18,9 @@ export default function CreateAccount(){
                     <img className="size-16" src={MainLogo}></img>
                 </div>
 
-                <h2 className="text-center bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-violet-400 text-2xl"><strong>Join Collaboration Hub</strong></h2>
+                <h2 className="text-center bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-violet-400 text-2xl">
+                    <strong>Join Collaboration Hub</strong>
+                </h2>
 
                 <p className="text-[#000000] text-center">Create your account now.</p>
 
@@ -56,7 +66,9 @@ export default function CreateAccount(){
                     <p className="text-violet-400">Privacy Policy</p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8"><div className="text-xs">Create Account</div></button>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8" onClick={switchPage}>
+                    <div className="text-xs flex flex-row justify-center">Create Account <img className="size-5 pl-1.5 pb-1" src={Arrow}/></div>
+                </button>
 
                 <div className="flex flex-row text-xs justify-center py-3">
                     <p className="text-[#000000]">Already have an account? </p>
