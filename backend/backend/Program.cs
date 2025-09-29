@@ -1,3 +1,4 @@
+using Scalar.AspNetCore; 
 
 namespace backend
 {
@@ -19,6 +20,13 @@ namespace backend
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference(options =>
+                {
+                    options.WithTitle("Your API Title")
+                           .WithTheme(ScalarTheme.Saturn)
+                           .WithDarkMode();
+                });
+
             }
 
             app.UseHttpsRedirection();
