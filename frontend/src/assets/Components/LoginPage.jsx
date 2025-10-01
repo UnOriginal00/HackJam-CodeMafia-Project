@@ -43,7 +43,7 @@ export default function LoginPage(){
                     <p className="text-violet-400"><u>Forgot Password?</u></p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000]" onClick={switchPage}>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] rounded-md h-10" onClick={switchPage}>
                     <div className="text-sm flex flex-row justify-center">Sign In <img className="size-5 pt-0.5 pl-1.5" src={Arrow}/></div>
                 </button>
 
