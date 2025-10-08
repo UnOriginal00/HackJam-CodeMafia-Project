@@ -1,39 +1,68 @@
 import UserIcon from "../Icons/User-Icons/UserIcon.svg"
 import MainLogo from "../Icons/MainLogo2.svg"
+import SettingsIcon from "../Icons/SettingsIcon.svg"
+import UploadIcon from "../Icons/UploadResourcesIcon.svg"
+import NotesIcon from "../Icons/NotesIcon.svg"
+import HomeIcon from "../Icons/HomeIcon.svg"
 
 
 export default function HomePage(){
     return(
-        <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[15vh]">
-            <div className="bg-[#F0F0F0] rounded-3xl w-[400px] h-[530px] flex flex-col justify-center  p-6 font-[Krub]">
+        <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[8vh]">
+            <div className="bg-[#F0F0F0] rounded-3xl w-[500px] h-[710px] flex flex-col justify-center  p-6 font-[Krub]">
 
-                <div className="bg-gradient-to-r from-orange-300 via-violet-300 to-violet-300 h-12 rounded-sm -mt-10 flex flex-row display">
-                    <div className="w-full flex justify-center">
-                        <img className="size-11 pt-2 pl-2.5" src={MainLogo}/>
-                    </div>
-                    <img className="size-10 pt-2" src={UserIcon}/>
+                <div className="bg-gradient-to-l from-orange-300 via-violet-300 to-violet-300 w-full h-10 rounded-sm -mt-5">
+
                 </div>
 
-                <hr className="mt-2 mb-20"/>
+                <hr className="mt-1.5"/>
 
-                <p className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-violet-400 to-violet-400 mb-3">Code Mafia Presents</p>
+                <p className="text-left bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-violet-400 text-xs mt-4">Code Mafia Presents</p>
 
-                <div className="relative p-px bg-gradient-to-br from-orange-300 to-violet-300 rounded-lg flex flex-col">
-
-                    <div className="bg-[#F0F0F0] p-2 rounded-md">
-
-                        <div className="flex flex-col items-center justify-center pb-6">
-                            <p className="text-center py-4">Join Our Collaboration Community <br/>Now.</p>
-                            <button className="bg-violet-400 py-3 px-11 w-50 rounded-sm text-[#F0F0F0]">Collab</button>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center pb-6">
-                            <p className="text-center pb-4">Check Out Our My Desk feature</p>
-                            <button className="bg-violet-400 py-3 px-2 w-50 rounded-sm text-[#F0F0F0]">My Desk</button>
-                        </div>
-
+                <div className="bg-gradient-to-br from-orange-300 to-violet-300 w-[95%] h-43 rounded-sm  flex flex-col justify-center mb-4">
+                    <div className="bg-[#F0F0F0] w-[99%] h-42 mx-0.5 rounded-sm p-3">
+                        <h1>Join Our collaboration Community Now.</h1>
+                        <p className="text-sm mb-2">This is where you can experience a <br/>group community with like minded <br/>ideas</p>
+                        <button className="bg-black text-white rounded-sm w-45 h-12">Come Collab Now</button>
                     </div>
+                </div>
 
+                <div className="bg-gradient-to-br from-orange-300 to-violet-300 w-[95%] h-43 rounded-sm  flex flex-col justify-center mb-4">
+                    <div className="bg-[#F0F0F0] w-[99%] h-42 mx-0.5 rounded-sm p-3">
+                        <h1>Check Out My Desk Feature.</h1>
+                        <p className="text-sm mb-2">Where general chat ideas meet and <br/>are helped with our AI <br/>summarization tool.</p>
+                        <button className="bg-black text-white rounded-sm w-45 h-12">Look At My Desk</button>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-orange-300 to-violet-300 w-[95%] h-43 rounded-md  flex flex-col justify-center">
+                    <div className="bg-[#F0F0F0] w-[99%] h-42 mx-0.5 rounded-md p-3">
+
+                        <h1>Treding Topics</h1>
+
+                        <div className="flex flex-row">
+                            <div className="border border-gray-300 w-50 h-30 rounded-md mr-4 pt-2 px-2">
+                                <p className="text-xs">New Python IDE Sweeps the developers room</p>
+                                <p className="text-xs py1.5">From Sam</p>
+                                <button className="bg-black text-white rounded-sm w-35 h-12 scale-75 -ml-4.5">Read</button>
+                            </div>
+
+                            <div className="border border-gray-300 w-50 h-30 rounded-md pt-2 px-2">
+                                <p className="text-xs">AI development</p>
+                                <p className="text-xs py-1.5">From Thabiso</p>
+                                <button className="bg-black text-white rounded-sm w-35 h-12 scale-75 -ml-4.5">Read</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-row mt-2">
+                    <div className="w-[85%]">
+                        <img className="scale-75" src={SettingsIcon}></img>
+                    </div>
+                    <img className="scale-75" src={UploadIcon}></img>
+                    <img className="scale-75" src={NotesIcon}></img>
                 </div>
 
             </div>
