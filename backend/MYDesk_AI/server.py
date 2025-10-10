@@ -1,51 +1,38 @@
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 import os
-import state # Update latest_user_input when receiving input
+import state
 
-
-
+# Folder for uploaded files
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOADS_DIR = os.path.join(BASE_DIR, "User_Uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 app = FastAPI()
 
-# Absolute path to your upload folder
-User_Uploads = r"C:\Users\mutsa\OneDrive\Desktop\MYDesk_AI\User_Uploads"  # Change this to user_uploads
-os.makedirs(User_Uploads, exist_ok=True)
+# Track files already indexed
+indexed_files = set(os.listdir(UPLOADS_DIR))
 
-#---------------------File Upload section-------------------------------
-
-# Endpoint to handle file uploads
+# File Upload Endpoint
 @app.post("/getfile")
-
-# Define the function to handle file uploads
 async def getfile(file: UploadFile = File(...)):
-    # Save the uploaded file to the User_Uploads folder
-    file_path = os.path.join(User_Uploads, file.filename)
-    
-    #Open the file in write-binary mode and write the contents of the uploaded file to it
+    """Save uploaded file and update indexed files list."""
+    file_path = os.path.join(UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
         f.write(await file.read())
 
-    # Confirm the file was received
-    return {
-        "filename": file.filename,
-        "message": "File received successfully!"
-    }
+    new_files = [f for f in os.listdir(UPLOADS_DIR) if f not in indexed_files]
+    if new_files:
+        indexed_files.update(new_files)
 
+    return {"filename": file.filename, "message": "File received!"}
 
-
-#-------------UserPrompt------------------------
-
-
-
-
+# User Prompt Endpoint
 class UserPrompt(BaseModel):
     prompt: str
 
 @app.post("/user_query")
 async def handle_user_query(user_input: UserPrompt):
-    state.write_prompt(user_input.prompt)  # write to JSON file
-    return {"message": "Prompt received"}
-
-
-
+    """Save the prompt for main.py to process."""
+    state.write_prompt(user_input.prompt)
+    return {"message": "Prompt received and queued for processing."}
