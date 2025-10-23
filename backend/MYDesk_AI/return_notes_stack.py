@@ -2,12 +2,12 @@ import os
 import json
 import requests
 
-# --- Configuration ---
+# Configuration 
 RAG_FOLDER = r"C:\HackJam-CodeMafia-Project\backend\MYDesk_AI\RAG_Responses"
-CSHARP_API_URL = "http://localhost:5000/api/notes/upload"  # I need this to be changed to the group c# point (Backend unit, please update accordingly)
+CSHARP_API_URL = "http://localhost:5000/api/notes/upload"  # I need this to be changed to the c# end point (Backend unit, please update accordingly)
 
 
-# --- Load all RAG responses into a stack (newest first) ---
+# Load all RAG responses into a stack (newest first) (Followed the Last In First Out principle{LIFO})
 def load_rag_stack(folder_path):
     if not os.path.exists(folder_path):
         raise FileNotFoundError(f"Folder not found: {folder_path}")
@@ -29,7 +29,7 @@ def load_rag_stack(folder_path):
     return stack
 
 
-# --- Send the latest note to C# backend ---
+# Send the latest note to C# backend 
 def send_latest_to_csharp(stack, api_url):
     if not stack:
         print("[INFO] No RAG responses to send.")
@@ -49,7 +49,7 @@ def send_latest_to_csharp(stack, api_url):
         print(f"[ERROR] Could not send note to C# API: {e}")
 
 
-# --- Main execution ---
+# Main execution 
 if __name__ == "__main__":
     rag_stack = load_rag_stack(RAG_FOLDER)
     print(f"Loaded {len(rag_stack)} RAG responses into stack.")
