@@ -6,10 +6,10 @@ from llama_index.core import VectorStoreIndex, StorageContext, load_index_from_s
 from llama_index.llms.huggingface import HuggingFaceLLM
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.settings import Settings
-from llama_index import GPTVectorStoreIndex
 from llama_index.core import SimpleDirectoryReader
 from state import read_prompt
-from llama_index import Document
+from llama_index.core import Document
+
 
 # --- Folder paths ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
