@@ -12,5 +12,12 @@ namespace backend.Data
         }
         public DbSet<User> Users { get; set; }
         public DbSet<User_Details> UserDetails { get; set; }
+        public DbSet<Group_List> group_Lists { get; set; }
+        public DbSet<AI_Generated_Data> aI_Generated_Datas { get; set; }
+        public DbSet<Chat_History> ChatHistory { get; set; }
+        public DbSet<Ideas> ideas { get; set; }
+        public DbSet<Votes> votes { get; set; }
+        public DbSet<Notes> notes { get; set; }
+
     }
 }

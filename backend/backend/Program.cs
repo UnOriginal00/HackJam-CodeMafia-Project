@@ -1,3 +1,5 @@
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore; 
 
 namespace backend
@@ -14,7 +16,18 @@ namespace backend
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            builder.Services.AddDbContext<HackJamDbContext>(options =>
+            options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
+            ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
+
             var app = builder.Build();
+
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<HackJamDbContext>();
+                Console.WriteLine($"Can connect to DB: {db.Database.CanConnect()}");
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -32,7 +45,6 @@ namespace backend
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 
