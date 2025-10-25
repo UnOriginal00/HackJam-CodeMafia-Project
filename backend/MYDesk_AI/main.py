@@ -1,131 +1,134 @@
-import os
-import json
-import torch
-import fitz
-import textwrap
-import pandas as pd
-import numpy as np
-from datetime import datetime
-from spacy.lang.en import English
-from sentence_transformers import SentenceTransformer, util
-import state
-from ollama_llm import generate_summary
+import os # To handle folder paths and files
+import json # To read/write JSON files
+import time # To pause the loop (sleep)
+from datetime import datetime # To create timestamps for responses
 
-UPLOAD_FOLDER = r"C:\Users\mutsa\OneDrive\Desktop\MYDesk_AI\User_Uploads"
-USER_NOTES_FOLDER = r"C:\Users\mutsa\OneDrive\Desktop\MYDesk_AI\User_Notes"
-CSV_PATH = r"C:\Users\mutsa\OneDrive\Desktop\MYDesk_AI\text.chunks_and_embeddings_df.csv"
-os.makedirs(USER_NOTES_FOLDER, exist_ok=True)
-
-# Initialize NLP and embedding model
-nlp = English()
-nlp.add_pipe("sentencizer")
-device = "cuda" if torch.cuda.is_available() else "cpu"
-embedding_model = SentenceTransformer("all-mpnet-base-v2", device=device)
+# LlamaIndex libraries for RAG (retrieval + AI summaries)
+from llama_index.core import VectorStoreIndex, StorageContext, load_index_from_storage  # For vector index storage
+from llama_index.llms.huggingface import HuggingFaceLLM # To use HuggingFace AI models
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding   # To convert text to vectors
+from llama_index.core.settings import Settings  # To set default AI and embedding models
+from llama_index.core import SimpleDirectoryReader   # To read documents from folders
+from state import read_prompt  #Custom function to read new user prompts from state file
+from llama_index.core import Document # To create text chunks as document objects
 
 
-#Now this function is important every time, everytime the prompt is entered instead of going throught the whole process of embedding the program will look through the vector database
-#The vector database at the moment is the csv, I'll get a real vector databse after I have tested the code.
+# --- Folder paths ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Current folder path
+UPLOADS_DIR = os.path.join(BASE_DIR, "User_Uploads")  # Folder where uploaded files are saved
+INDEX_DIR = os.path.join(BASE_DIR, "rag_index_storage")  # Folder to save the vector index
+RESPONSES_DIR = os.path.join(BASE_DIR, "RAG_Responses") # Folder to save AI summaries
+os.makedirs(RESPONSES_DIR, exist_ok=True)  # Make sure the responses folder exists
 
-# Load existing embeddings if CSV exists and is not empty
-pages_and_chunks = []
-
-if os.path.exists(CSV_PATH) and os.path.getsize(CSV_PATH) > 0:
-    try:
-        df_chunks = pd.read_csv(CSV_PATH)
-        if not df_chunks.empty:
-            pages_and_chunks = df_chunks.to_dict(orient="records")
-            # Convert embeddings from string to numpy arrays
-            for item in pages_and_chunks:
-                item["chunk_embedding"] = np.array(json.loads(item["chunk_embedding"]))
-            print(f"[INFO] Loaded {len(pages_and_chunks)} chunks from CSV")
-        else:
-            print("[INFO] CSV exists but is empty. Will process PDFs...")
-    except pd.errors.EmptyDataError:
-        print("[INFO] CSV exists but could not be read. Will process PDFs...")
-else:
-    print("[INFO] No existing CSV found. Will process PDFs...")
-
-# Process new PDFs if needed
-existing_files = {item["File"] for item in pages_and_chunks} if pages_and_chunks else set()
-all_pages = []
-
-for filename in os.listdir(UPLOAD_FOLDER):
-    if not filename.lower().endswith(".pdf") or filename in existing_files:
-        continue
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    print(f"[INFO] Processing new PDF: {filename}")
-    doc = fitz.open(file_path)
-    for page_num, page in enumerate(doc):
-        text = page.get_text().replace("\n", " ").strip()
-        all_pages.append({"File": filename, "Page_Number": page_num, "Text": text})
-
-# Split new pages into sentence chunks and embed
-num_sentences_per_chunk = 10
-for item in all_pages:
-    sentences = [str(s).strip() for s in nlp(item["Text"]).sents if str(s).strip()]
-    for i in range(0, len(sentences), num_sentences_per_chunk):
-        chunk = sentences[i:i + num_sentences_per_chunk]
-        joined_chunk = " ".join(chunk)
-        chunk_embedding = embedding_model.encode(joined_chunk, convert_to_tensor=True).cpu().numpy()
-        pages_and_chunks.append({
-            "File": item["File"],
-            "Page_Number": item["Page_Number"],
-            "sentence_chunk": joined_chunk,
-            "chunk_embedding": chunk_embedding
-        })
-
-# Save all chunks and embeddings to CSV
-for item in pages_and_chunks:
-    item["chunk_embedding"] = json.dumps(item["chunk_embedding"].tolist())
-
-df_save = pd.DataFrame(pages_and_chunks)
-df_save.to_csv(CSV_PATH, index=False)
-print(f"[INFO] Saved {len(pages_and_chunks)} chunks to CSV at {CSV_PATH}")
-
-# Convert embeddings to tensor for semantic search
-embeddings = torch.tensor(
-    np.stack([np.array(json.loads(item["chunk_embedding"])) for item in pages_and_chunks], axis=0),
-    dtype=torch.float32
-).to(device)
-
-print("[INFO] Ready to process user queries...")
+# --- Setup LLM and embeddings ---
+llm = HuggingFaceLLM(
+    model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0", # Name of AI model
+    tokenizer_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0" # Tokenizer for AI model
+)
+embed_model = HuggingFaceEmbedding(model_name="all-MiniLM-L6-v2") # Model for embeddings
 
 
+Settings.llm = llm # Set default AI model
+Settings.embed_model = embed_model # Set default embedding model
 
-#/////////////////////////////////////////////////////////////////////User_iNPUT///////////////////////////////////////////////////////////////////////////////
-#If you noticed the user_input is in a loop i need it to be like that becuase in this section the user input 
-# and the pages and chunks are together so everytime a user put in a new prompt it automaitaclly generates info.
+# Helper functions to remove repeated lines
+def clean_text(text: str) -> str:
+    """Remove repeated lines."""
+    lines = text.split("\n")
+    unique_lines = []
+    for line in lines:
+        stripped = line.strip() # Remove spaces
+        if stripped and stripped not in unique_lines:
+            unique_lines.append(stripped)
+    return "\n".join(unique_lines)
 
-# User input loop
+# Helper function to split large documents into smaller chunks
+def chunk_documents(documents, chunk_size=500, chunk_overlap=50):
+
+    """Split documents into smaller chunks for better processing."""
+    """ Returns a list of Document objects"""
+
+    nodes = []
+    for doc in documents:
+        text = doc.get_text()
+        start = 0
+        while start < len(text):
+            end = min(start + chunk_size, len(text))
+            nodes.append(Document(text=text[start:end])) # Create a chunk
+            start += chunk_size - chunk_overlap
+    return nodes
+
+def load_or_build_index():
+    """Load existing index or build a new one with chunking."""
+    if os.path.exists(INDEX_DIR):
+        storage_context = StorageContext.from_defaults(persist_dir=INDEX_DIR)
+        return load_index_from_storage(storage_context)
+    else:
+        print("Building new index from uploaded files...")
+        documents = SimpleDirectoryReader(UPLOADS_DIR).load_data() # Read all uploaded files
+        nodes = chunk_documents(documents, chunk_size=500, chunk_overlap=50) # Split into chunks
+        index = VectorStoreIndex.from_documents(nodes) # Create vector index
+        index.storage_context.persist(persist_dir=INDEX_DIR) # Save index for later
+        print("Index built and saved!") 
+        return index
+
+# --- Initialize index ---
+index = load_or_build_index() # Load or build index
+query_engine = index.as_query_engine() # Create engine to query AI
+indexed_files = set(os.listdir(UPLOADS_DIR)) # Track already indexed files
+
+print("RAG processor started. Monitoring uploads and prompts...")
+
+# --- Main loop ---
 while True:
-    query = state.read_prompt()  # read from JSON file
-    if query:
-       
-        print(f"[INFO] New user input received: {query}")
+    # Check for new uploaded files
+    current_files = set(os.listdir(UPLOADS_DIR))
+    new_files = current_files - indexed_files # Find files not yet indexed
+    if new_files:
+        print(f"New files detected: {new_files}. Updating index...")
+        documents = SimpleDirectoryReader(UPLOADS_DIR, file_extractor=lambda path: os.path.basename(path) in new_files).load_data()
+        nodes = chunk_documents(documents, chunk_size=500, chunk_overlap=50) # Read only new files
+        index.insert_documents(nodes) # Add new chunks to index
+        index.storage_context.persist(persist_dir=INDEX_DIR) # Save updated index
+        indexed_files.update(new_files) # Update tracked files
+        query_engine = index.as_query_engine()  # Update query engine
+        print("Index updated with new files.")
 
-        user_embedding = embedding_model.encode(query, convert_to_tensor=True).to(device)
-        dot_scores = util.dot_score(user_embedding, embeddings)[0]
-        top_results = torch.topk(dot_scores, k=10)
+    # Check for new user prompt
+    prompt = read_prompt() # Read prompt from state file
+    if prompt:
+        print(f"New prompt detected: {prompt}")
 
-        def print_wrapped(text, wrap_length=80):
-            print(textwrap.fill(text, wrap_length))
+        # Query each chunk individually for summarization
+        all_chunk_summaries = []
+        for node in index.storage_context.docstore.docs.values():
+            chunk_text = node.get_text()
+            wrapped_prompt = f"""
+You are an expert study-notes generator.
+Summarize the following chunk into clear, concise **paragraphs** suitable for studying.
+Ignore headings or numbered lists. Focus only on meaningful explanations.
 
-        print("\nTop 10 relevant chunks:")
-        for score, idx in zip(top_results[0], top_results[1]):
-            chunk_text = pages_and_chunks[idx]["sentence_chunk"]
-            page_number = pages_and_chunks[idx]["Page_Number"]
-            print(f"\nScore: {score:.6f} | Page: {page_number}")
-            print_wrapped(chunk_text)
+Chunk content:
+{chunk_text}
+"""
+            response = query_engine.query(wrapped_prompt)  # Ask AI to summarize
+            all_chunk_summaries.append(str(response))
 
-        # Generate summary
-        top_chunks_text = " ".join([pages_and_chunks[idx]["sentence_chunk"] for idx in top_results[1]])
-        summary = generate_summary(prompt=query, context=top_chunks_text)
-        print("\nGenerated Summary:\n", summary)
+        # Merge and clean all chunk summaries
+        final_summary = clean_text("\n".join(all_chunk_summaries))
 
-        # Save summary
-        safe_prompt = "".join(c if c.isalnum() else "_" for c in query[:30])
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = os.path.join(USER_NOTES_FOLDER, f"{timestamp}_{safe_prompt}.txt")
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(summary)
-        print(f"[INFO] Summary saved to {filepath}\n")
+        # Save final study notes
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") # Create timestamp
+        response_data = {
+            "timestamp": timestamp,
+            "query": prompt,
+            "summary": final_summary
+        }
+        output_file = os.path.join(RESPONSES_DIR, f"response_{timestamp}.json")
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(response_data, f, indent=4, ensure_ascii=False)
+
+        print(f"Summary saved to: {output_file}")
+
+    # Sleep to avoid high CPU usage
+    time.sleep(2)
