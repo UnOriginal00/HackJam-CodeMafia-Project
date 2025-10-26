@@ -19,5 +19,14 @@ namespace backend.Data
         public DbSet<Votes> votes { get; set; }
         public DbSet<Notes> notes { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Define the one-to-one relationship
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.UserDetail)
+                .WithOne(d => d.User)
+                .HasForeignKey<User_Details>(d => d.UserId);
+        }
+
     }
 }

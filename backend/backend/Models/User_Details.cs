@@ -7,17 +7,25 @@ namespace backend.Models
     public class User_Details
     {
         [Key]
+        [ForeignKey("User")] // ← it's both PK and FK
         [Column("user_id")]
         public int UserId { get; set; }
+
         [Column("name")]
         public string Name { get; set; }
-        [Column("Surname")]
-        public string Surename { get; set; }
+
+        [Column("surname")]
+        public string Surname { get; set; }
+
         [Column("email")]
         public string Email { get; set; }
+
         [Column("phone_number")]
-        public string PhoneNumber { get; set; }
+        public int PhoneNumber { get; set; }
+
         [Column("joined_at")]
-        public DateTime joined_at { get; set; }
+        public DateTime JoinedAt { get; set; }
+
+        public User User { get; set; }
     }
 }

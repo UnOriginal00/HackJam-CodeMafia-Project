@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore; 
 
@@ -15,6 +16,9 @@ namespace backend
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            //DI for Authentication Service
+            builder.Services.AddScoped<AuthenticationService>();
+
 
             builder.Services.AddDbContext<HackJamDbContext>(options =>
             options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
@@ -37,7 +41,7 @@ namespace backend
                 {
                     options.WithTitle("Your API Title")
                            .WithTheme(ScalarTheme.Saturn)
-                           .WithDarkMode();
+                           .EnableDarkMode();
                 });
 
             }
