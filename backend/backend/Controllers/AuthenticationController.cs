@@ -1,6 +1,7 @@
 ﻿using backend.Models.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
@@ -29,6 +30,20 @@ namespace backend.Controllers
                 return Conflict(new { message = result });
 
             return Ok(new { message = result });
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] backend.Models.DTOs.LoginRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.LoginAsync(request);
+
+            if (result == null)
+                return Unauthorized(new { message = "Invalid email or password." });
+
+            return Ok(new { message = "Login successful." });
         }
     }
 }

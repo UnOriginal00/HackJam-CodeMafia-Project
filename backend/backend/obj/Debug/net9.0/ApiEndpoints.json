@@ -1,6 +1,22 @@
 [
   {
     "ContainingType": "backend.Controllers.AuthenticationController",
+    "Method": "Login",
+    "RelativePath": "api/Authentication/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "backend.Models.DTOs.LoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backend.Controllers.AuthenticationController",
     "Method": "Signup",
     "RelativePath": "api/Authentication/signup",
     "HttpMethod": "POST",
