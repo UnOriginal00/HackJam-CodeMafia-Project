@@ -23,9 +23,7 @@ namespace backend
             // Configure EF Core with MySQL
             builder.Services.AddDbContext<HackJamDbContext>(options =>
                 options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
-                    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb")))
-                       .EnableSensitiveDataLogging()     // TEMP: shows parameter values
-                       .LogTo(Console.WriteLine));       // TEMP: prints SQL to console
+                    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
                 
 
 
