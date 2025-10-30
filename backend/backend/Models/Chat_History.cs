@@ -17,7 +17,7 @@ namespace backend.Models
         public int UserID { get; set; }
 
         [Column("message_text")]
-        public string MessageText { get; set; }
+        public string MessageText { get; set; } = string.Empty;
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }

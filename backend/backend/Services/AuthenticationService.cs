@@ -39,8 +39,13 @@ namespace backend.Services
                 PasswordHash = passwordHash,
                 GroupId = null // optional
             };
+            
+            //check in case
+            System.Diagnostics.Debug.WriteLine($"newUser.Email before SaveChanges: '{newUser.Email}'");
 
             _context.Users.Add(newUser);
+            //check in case
+
             await _context.SaveChangesAsync(); // Save to generate UserId
 
             // 4️⃣ Create related UserDetails
@@ -80,7 +85,7 @@ namespace backend.Services
             var hashedPassword = HashPassword(request.Password);
             if (user.PasswordHash != hashedPassword) return null;
 
-            return user; // Or return token/user info later
+            return user; 
         }
 
     }

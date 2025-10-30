@@ -31,7 +31,7 @@ namespace backend.Controllers
 
             return Ok(new { message = result });
         }
-
+        //localhost/api/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] backend.Models.DTOs.LoginRequest request)
         {
