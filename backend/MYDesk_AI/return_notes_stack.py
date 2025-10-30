@@ -4,7 +4,7 @@ import requests
 
 # Configuration 
 RAG_FOLDER = r"C:\HackJam-CodeMafia-Project\backend\MYDesk_AI\RAG_Responses"
-CSHARP_API_URL = "http://localhost:5000/api/notes/upload"  # I need this to be changed to the c# end point (Backend unit, please update accordingly)
+CSHARP_API_URL = "http://10.143.139.213:5000"  # I need this to be changed to the c# end point (Backend unit, please update accordingly)
 
 
 # Load all RAG responses into a stack (newest first) (Followed the Last In First Out principle{LIFO})

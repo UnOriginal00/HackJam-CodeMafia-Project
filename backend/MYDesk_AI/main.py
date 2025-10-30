@@ -132,3 +132,5 @@ Chunk content:
 
     # Sleep to avoid high CPU usage
     time.sleep(2)
+
+#Need to put a timer to show how long it takes to process each prompt?
