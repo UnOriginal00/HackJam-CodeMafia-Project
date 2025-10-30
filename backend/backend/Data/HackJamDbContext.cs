@@ -19,6 +19,9 @@ namespace backend.Data
         public DbSet<Votes> votes { get; set; }
         public DbSet<Notes> notes { get; set; }
 
+        // Add DbSet for user_groups join table
+        public DbSet<User_Groups> UserGroups { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Define the one-to-one relationship
@@ -26,6 +29,22 @@ namespace backend.Data
                 .HasOne(u => u.UserDetail)
                 .WithOne(d => d.User)
                 .HasForeignKey<User_Details>(d => d.UserId);
+
+            // Configure composite key and relationships for user_groups join table
+            modelBuilder.Entity<User_Groups>()
+                .HasKey(ug => new { ug.UserId, ug.GroupId });
+
+            modelBuilder.Entity<User_Groups>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(ug => ug.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User_Groups>()
+                .HasOne<Group_List>()
+                .WithMany()
+                .HasForeignKey(ug => ug.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
     }
