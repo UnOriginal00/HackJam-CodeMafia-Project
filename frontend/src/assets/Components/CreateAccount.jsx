@@ -66,7 +66,7 @@ export default function CreateAccount(){
                     <p className="text-violet-400">Privacy Policy</p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8 rounded-md " onClick={switchPage}>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8 rounded-md cursor-pointer" onClick={switchPage}>
                     <div className="text-xs flex flex-row justify-center">Create Account <img className="size-5 pl-1.5 pb-1" src={Arrow}/></div>
                 </button>
 

@@ -1,6 +1,7 @@
 ﻿using backend.Data;
-using backend.Models.DTOs;
 using backend.Models;
+using backend.Models.DTOs;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -15,31 +16,36 @@ namespace backend.Services
         {
             _context = context;
         }
-
+        //SignUp User method
         public async Task<string> SignupAsync(SignupRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            // 1️⃣ Check if user already exists
+            // Check if user already exists
             var existingUser = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (existingUser != null)
                 return "User already exists.";
 
-            // 2️⃣ Hash password
+            // Hash password
             var passwordHash = HashPassword(request.Password);
 
-            // 3️⃣ Create User (GroupId is optional)
+            // Create User (GroupId is optional)
             var newUser = new User
             {
                 Email = request.Email,
                 PasswordHash = passwordHash,
                 GroupId = null // optional
             };
+            
+            //check in case
+            System.Diagnostics.Debug.WriteLine($"newUser.Email before SaveChanges: '{newUser.Email}'");
 
             _context.Users.Add(newUser);
+            //check in case
+
             await _context.SaveChangesAsync(); // Save to generate UserId
 
             // 4️⃣ Create related UserDetails
@@ -59,6 +65,7 @@ namespace backend.Services
             return "User registered successfully.";
         }
 
+        //Password Hashing
         private string HashPassword(string password)
         {
             using (var sha = SHA256.Create())
@@ -67,5 +74,19 @@ namespace backend.Services
                 return Convert.ToBase64String(bytes);
             }
         }
+
+        //SignIn Method
+        public async Task<User?> LoginAsync(backend.Models.DTOs.LoginRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user == null) return null;
+
+            var hashedPassword = HashPassword(request.Password);
+            if (user.PasswordHash != hashedPassword) return null;
+
+            return user; 
+        }
+
     }
 }

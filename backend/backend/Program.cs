@@ -1,7 +1,7 @@
 using backend.Data;
 using backend.Services;
 using Microsoft.EntityFrameworkCore;
-using Scalar.AspNetCore; 
+using Scalar.AspNetCore;
 
 namespace backend
 {
@@ -12,20 +12,36 @@ namespace backend
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+            // OpenAPI / Swagger
             builder.Services.AddOpenApi();
-            //DI for Authentication Service
-            builder.Services.AddScoped<AuthenticationService>();
+            // DI for Chat Service (keep only what's needed for chats)
+            builder.Services.AddScoped<ChatService>();
 
-
+            // Configure EF Core with MySQL
             builder.Services.AddDbContext<HackJamDbContext>(options =>
-            options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
-            ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
+                options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
+                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
+
+            builder.Services.AddHttpClient();
+
+            // Allow all CORS for simple testing (adjust for production)
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
+            // NOTE: Authentication removed to keep things simple.
+            // Controllers should not require [Authorize] if you want unrestricted chat posting.
 
             var app = builder.Build();
 
+            app.UseCors("AllowAll");
 
             using (var scope = app.Services.CreateScope())
             {
@@ -43,12 +59,13 @@ namespace backend
                            .WithTheme(ScalarTheme.Saturn)
                            .EnableDarkMode();
                 });
-
             }
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            // Authentication/Authorization removed for simplicity:
+            // app.UseAuthentication();
+            // app.UseAuthorization();
 
             app.MapControllers();
 
