@@ -15,21 +15,20 @@ namespace backend
             builder.Services.AddControllers();
             // OpenAPI / Swagger
             builder.Services.AddOpenApi();
-            // DI for Chat Service (keep only what's needed for chats)
+
+            // DI registrations
+            builder.Services.AddScoped<AuthenticationService>();
             builder.Services.AddScoped<ChatService>();
-            // Register GroupsService so Controllers can resolve it
             builder.Services.AddScoped<GroupsService>();
+            builder.Services.AddScoped<IdeasService>(); // <-- register IdeasService
 
             // Configure EF Core with MySQL
             builder.Services.AddDbContext<HackJamDbContext>(options =>
                 options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
-                    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
-                
-
+                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
 
             builder.Services.AddHttpClient();
 
-            // Allow all CORS for simple testing (adjust for production)
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
@@ -39,9 +38,6 @@ namespace backend
                           .AllowAnyHeader();
                 });
             });
-
-            // NOTE: Authentication removed to keep things simple.
-            // Controllers should not require [Authorize] if you want unrestricted chat posting.
 
             var app = builder.Build();
 
@@ -53,7 +49,6 @@ namespace backend
                 Console.WriteLine($"Can connect to DB: {db.Database.CanConnect()}");
             }
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -66,13 +61,7 @@ namespace backend
             }
 
             app.UseHttpsRedirection();
-
-            // Authentication/Authorization removed for simplicity:
-            // app.UseAuthentication();
-            // app.UseAuthorization();
-
             app.MapControllers();
-
             app.Run();
         }
     }
