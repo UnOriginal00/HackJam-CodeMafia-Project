@@ -44,7 +44,7 @@ export default function LoginPage(){
                 </div>
 
                 <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] rounded-md h-10" onClick={switchPage}>
-                    <div className="text-sm flex flex-row justify-center">Sign In <img className="size-5 pt-0.5 pl-1.5" src={Arrow}/></div>
+                    <div className="text-sm flex flex-row justify-center cursor-pointer">Sign In <img className="size-5 pt-0.5 pl-1.5" src={Arrow}/></div>
                 </button>
 
                 <div className="flex flex-row text-xs justify-center py-4">

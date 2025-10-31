@@ -14,8 +14,6 @@ export default function MyDeskPage(){
     const switchPage = () => {
         route("/home-page");
     };
-
-
     const showComponet = () => {
         setIsVisble(!isVisble);
     };
