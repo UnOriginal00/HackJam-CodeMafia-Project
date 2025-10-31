@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Services;
-using backend.Models;
 using backend.Models.DTOs;
 using System;
 using System.Threading.Tasks;
@@ -23,8 +22,7 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateGroup([FromBody] GroupCreateRequest request)
         {
-            if (!ModelState.IsValid)
-                return ValidationProblem(ModelState);
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
             try
             {
@@ -33,26 +31,88 @@ namespace backend.Controllers
             }
             catch (ArgumentException ex)
             {
-                // map duplicate-name argument to 409 Conflict, other argument issues -> 400
-                if (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
-                    return Conflict(new { message = ex.Message });
                 return BadRequest(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                // Map "creator user does not exist" to 404 Not Found
-                if (ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("Creator user does not exist", StringComparison.OrdinalIgnoreCase))
-                {
-                    return NotFound(new { message = ex.Message });
-                }
-
-                // keep DB detail while debugging; remove before production
-                return StatusCode(500, new { message = "Failed to create group.", detail = ex.Message });
+                return NotFound(new { message = ex.Message });
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Failed to create group.", detail = ex.Message });
+            }
+        }
+
+        // POST /api/groups/join
+        [HttpPost("join")]
+        public async Task<IActionResult> JoinGroup([FromBody] JoinGroupRequest request)
+        {
+            try
+            {
+                await _groupsService.JoinGroupAsync(request);
+                return Ok(new { message = "Joined group." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to join group.", detail = ex.Message });
+            }
+        }
+
+        // PUT /api/groups/{groupId}/rename
+        [HttpPut("{groupId}/rename")]
+        public async Task<IActionResult> RenameGroup(int groupId, [FromBody] RenameGroupRequest request)
+        {
+            if (groupId != request.GroupID) return BadRequest(new { message = "groupId mismatch." });
+
+            try
+            {
+                await _groupsService.RenameGroupAsync(request);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // DELETE /api/groups/{groupId}
+        [HttpDelete("{groupId}")]
+        public async Task<IActionResult> DeleteGroup(int groupId, [FromBody] DeleteGroupRequest request)
+        {
+            if (groupId != request.GroupID) return BadRequest(new { message = "groupId mismatch." });
+
+            try
+            {
+                await _groupsService.DeleteGroupAsync(request);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
 

@@ -14,6 +14,8 @@ namespace backend.Models
         public string GroupName { get; set; } = string.Empty;
         [Column("description")]
         public string Description { get; set; } = string.Empty;
+        [Column("creator_user_id")]
+        public int? CreatorUserId { get; set; }
         [Column("created_at")]
         public DateTime CreatedDate { get; set; }
 

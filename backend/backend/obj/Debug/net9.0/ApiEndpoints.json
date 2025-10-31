@@ -153,6 +153,27 @@
   },
   {
     "ContainingType": "backend.Controllers.GroupsController",
+    "Method": "DeleteGroup",
+    "RelativePath": "api/Groups/{groupId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "backend.Models.DTOs.DeleteGroupRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backend.Controllers.GroupsController",
     "Method": "GetGroup",
     "RelativePath": "api/Groups/{groupId}",
     "HttpMethod": "GET",
@@ -162,6 +183,43 @@
       {
         "Name": "groupId",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backend.Controllers.GroupsController",
+    "Method": "RenameGroup",
+    "RelativePath": "api/Groups/{groupId}/rename",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "backend.Models.DTOs.RenameGroupRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backend.Controllers.GroupsController",
+    "Method": "JoinGroup",
+    "RelativePath": "api/Groups/join",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "backend.Models.DTOs.JoinGroupRequest",
         "IsRequired": true
       }
     ],
