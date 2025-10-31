@@ -17,11 +17,15 @@ namespace backend
             builder.Services.AddOpenApi();
             // DI for Chat Service (keep only what's needed for chats)
             builder.Services.AddScoped<ChatService>();
+            // Register GroupsService so Controllers can resolve it
+            builder.Services.AddScoped<GroupsService>();
 
             // Configure EF Core with MySQL
             builder.Services.AddDbContext<HackJamDbContext>(options =>
                 options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
-                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
+                    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
+                
+
 
             builder.Services.AddHttpClient();
 
