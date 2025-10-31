@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using backend.Services;
 using backend.Models;
 using backend.Models.DTOs;
+using System;
 using System.Threading.Tasks;
 
 namespace backend.Controllers
@@ -33,13 +34,20 @@ namespace backend.Controllers
             catch (ArgumentException ex)
             {
                 // map duplicate-name argument to 409 Conflict, other argument issues -> 400
-                if (ex.Message.Contains("already exists"))
+                if (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
                     return Conflict(new { message = ex.Message });
                 return BadRequest(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                // keep DB detail while debugging, remove in production
+                // Map "creator user does not exist" to 404 Not Found
+                if (ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("Creator user does not exist", StringComparison.OrdinalIgnoreCase))
+                {
+                    return NotFound(new { message = ex.Message });
+                }
+
+                // keep DB detail while debugging; remove before production
                 return StatusCode(500, new { message = "Failed to create group.", detail = ex.Message });
             }
             catch (System.Exception ex)
