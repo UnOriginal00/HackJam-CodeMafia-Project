@@ -16,6 +16,9 @@ export default function HomePage(){
     const switchPage = () => {
         route("/home-page/MyDeskPage");
     };
+    const homepage = () => {
+        route("/home-page/Collab")
+    }
 
     let w = window.innerWidth;
     let isLargeScreen = false;
@@ -64,7 +67,7 @@ export default function HomePage(){
 
                         </div>
                         <div className="lg:flex lg:justify-center">
-                            <button className="bg-black text-white text-xs rounded-sm w-35 h-8 lg:w-73 lg:h-10 cursor-pointer">Come Collab Now</button>
+                            <button className="bg-black text-white text-xs rounded-sm w-35 h-8 lg:w-73 lg:h-10 cursor-pointer" onClick={homepage}>Come Collab Now</button>
                         </div>
                     </div>
                 </div>
