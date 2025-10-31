@@ -6,6 +6,9 @@ export default function CreateAccount(){
 
     const route = useNavigate();
 
+    const ip = "10.143.138.102"
+    fecth(`http://${ip}/api/Authentication/signup`);
+
     const switchPage = () => {
         route("/home-page");
     };
