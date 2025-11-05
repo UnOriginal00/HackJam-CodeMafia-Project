@@ -6,6 +6,7 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom'
 import HomePage from './assets/Components/HomePage'
 import MyDeskPage from './assets/Components/MyDeskPage'
 import CollaborationIdeas from './assets/Components/CollaborationIdeas'
+import Resources from './assets/Components/Resources'
 
 const router = createBrowserRouter(
   [
@@ -14,6 +15,7 @@ const router = createBrowserRouter(
     {path: "/home-page", element: <HomePage/>},
     {path: "/home-page/MyDeskPage", element: <MyDeskPage/>},
     {path:"/home-page/Collab", element: <CollaborationIdeas/>},
+    {path:"/resources", element: <Resources/>},
   ]
 );
 

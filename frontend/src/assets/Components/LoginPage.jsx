@@ -57,7 +57,6 @@ export default function LoginPage(){
                 <hr className="text-[#000000]"/>
 
                 <p className="text-xs text-gray-400 text-center pt-4">"Where ideas are Shared and Transformed."</p>
-
             </div>
         </div>
     </>

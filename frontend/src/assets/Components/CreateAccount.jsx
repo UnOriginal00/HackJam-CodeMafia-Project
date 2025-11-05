@@ -1,17 +1,64 @@
 import { Link, useNavigate } from "react-router-dom"
 import MainLogo from "../Icons/MainLogo.svg"
 import Arrow from "../Icons/Arrow.svg"
+import { useState } from "react";
 
 export default function CreateAccount(){
+    const [newUser, setNewUser] = useState({
+        name : '',
+        surName : '',
+        email : '',
+        password : '',
+        phoneNumber : ''
+    });
+    const [confirmPassword, setConfirmPassWord] = useState()
 
-    const route = useNavigate();
-
-    const ip = "10.143.138.102"
-    fecth(`http://${ip}/api/Authentication/signup`);
-
+    const route = useNavigate(); 
     const switchPage = () => {
         route("/home-page");
     };
+
+    const handleChange = (e) => {
+        const {name, value} = e.target;
+        setNewUser(prev => ({...prev, [name] : value}));
+    };
+
+    const submit = async () => {
+        if (newUser.password.length <= 8){
+            alert("Password must be 8 characters long");
+            return;
+        }
+
+        if (newUser.password != confirmPassword){
+            alert("Passwords do not match");
+            return;
+        }
+
+        const response = {
+            name : newUser.name,
+            surName : newUser.surName,
+            email : newUser.email,
+            password : newUser.password,
+            phoneNumber : newUser.phoneNumber
+        }
+
+        try{
+            const data = await fetch('https://localhost:7122/api/Authentication/signup', {
+                method: 'POST',
+                headers: {'Content-Type' : 'application/json'},
+                body: JSON.stringify(response)
+                });
+
+                if(!data.ok){
+                    throw new Error('Failed to Create Account')
+                }
+
+            route('/home-page');
+        }
+        catch (error){
+            console.error(error);
+        }
+    }
 
     return(
         <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[12vh]">
@@ -31,45 +78,45 @@ export default function CreateAccount(){
 
                     <div className="flex flex-col">
                         <p className="text-[#000000]">First Name</p>
-                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-[83%] pl-2"></input>
+                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-[83%] pl-2" name='name' value={newUser.name} onChange={handleChange}></input>
                     </div>
 
                     <div className="flex flex-col">
                         <p className="text-[#000000]">Surname</p>
-                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2"></input>
+                        <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" name='surName' value={newUser.surName} onChange={handleChange}></input>
                     </div>
 
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Phone Number</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" name="phoneNumber" value={newUser.phoneNumber} onChange={handleChange}></input>
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Email Address</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="email"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="email" name="email" value={newUser.email} onChange={handleChange}></input>
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Password</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="password"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="password" name="password" value={newUser.password} onChange={handleChange}></input>
                 </div>
 
                 <div className="pb-2">
                     <p className="text-[#000000]">Confirm Password</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="password"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full pl-2" type="password" value={confirmPassword} onChange={(e) => setConfirmPassWord(e.target.value)}></input>
                 </div>
- 
+
                 <div className="flex flex-row text-xs justify-center py-2">
                     <input type="checkbox"></input>
                     <p className="text-[#000000]">I agree to the</p>
                     <p className="text-violet-400"> Terms and condition </p>
-                    <p className="text-[#000000]"> and </p>
+                    <p clsassName="text-[#000000]"> and </p>
                     <p className="text-violet-400">Privacy Policy</p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8 rounded-md cursor-pointer" onClick={switchPage}>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8 rounded-md cursor-pointer" onClick={submit}>
                     <div className="text-xs flex flex-row justify-center">Create Account <img className="size-5 pl-1.5 pb-1" src={Arrow}/></div>
                 </button>
 

@@ -10,8 +10,7 @@ import {Link, useNavigate} from "react-router-dom"
 import MyDeskSBDesktop from "./MyDeskSBDesktop"
 import ProfileSideBar from "./ProfileSideBar"
 
-
-export default function MyDeskPage(){
+export default function Resources(){
     const [isVisble, setIsVisble] = useState(false);
     const route = useNavigate();
     const switchPage = () => {
@@ -30,6 +29,7 @@ export default function MyDeskPage(){
     else{
         isLargeScreen = false;
     }
+
 
     return(
         <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[5vh]">
