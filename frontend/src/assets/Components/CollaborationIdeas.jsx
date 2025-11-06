@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+// CollaborationIdeas.jsx - COMPLETE VERSION
+// Replace: frontend/src/assets/Components/CollaborationIdeas.jsx
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User, FileText, Lightbulb, MessageSquare, Settings, ThumbsUp, Plus, Send } from 'lucide-react';
+import { getAllIdeas, createIdea, toggleVote } from '../../services/ideasService';
 
 // Avatar Component
 const Avatar = ({ initials, size = 'md' }) => {
@@ -52,7 +56,9 @@ const Button = ({ children, variant = 'primary', onClick, className = '' }) => {
 
 // Tag Badge Component
 const TagBadge = ({ tag }) => (
-  <span className="px-4 py-1 bg-gradient-to-r from-orange-400 via-pink-200 to-purple-400 rounded-full text-xs font-normal text-black">
+  <span className="px-4 py-1 rounded-full text-xs font-normal text-black" style={{
+    background: 'linear-gradient(317.49deg, rgba(246, 157, 75, 0.9) 23.12%, rgba(206, 168, 163, 0.9) 30.11%, rgba(166, 179, 250, 0.9) 40.46%, rgba(189, 181, 253, 0.9) 55.21%)'
+  }}>
     {tag}
   </span>
 );
@@ -103,42 +109,104 @@ const IdeaCard = ({ idea, onLike }) => (
 );
 
 // Sidebar Menu Item Component
-const SidebarMenuItem = ({ icon: Icon, title, description, active = false }) => (
-  <div className={`bg-white/70 rounded-lg p-4 flex items-start gap-3 ${active ? 'border-3 border-purple-600' : ''}`}>
+const SidebarMenuItem = ({ icon: Icon, title, description, active = false, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`w-full bg-white/70 rounded-lg p-4 flex items-start gap-3 hover:bg-white/90 transition ${active ? 'border-3 border-purple-600' : ''}`}
+  >
     <Icon className="w-8 h-8 flex-shrink-0 text-black" />
-    <div>
+    <div className="text-left">
       <div className="font-normal text-lg text-black">{title}</div>
       <div className="text-sm text-gray-800">{description}</div>
     </div>
-  </div>
+  </button>
 );
 
 // Main Component
 export default function CollaborationIdeas() {
-  const navigate = useNavigate(); // <-- Add navigation
-
-  const [ideas, setIdeas] = useState([
-    { id: 1, author: 'JR', title: 'Migration of to new IDE', content: 'I have recently heard about a new IDE that i believe would assist with our projects what do you guys think of moving our projects to it?', tag: 'Software', likes: 20, replies: 3, time: '09:17 AM', liked: false },
-    { id: 2, author: 'ME', title: 'New management', content: 'As we all know our previous group leader has quit so therefor I believe we should host a voting for a new leader on Friday.', tag: 'Organisation', likes: 14, replies: 6, time: '09:24 AM', liked: false },
-    { id: 3, author: 'JR', title: 'Migration of to new IDE', content: 'I have recently heard about a new IDE that i believe would assist with our projects what do you guys think of moving our projects to it?', tag: 'Software', likes: 20, replies: 3, time: '09:17 AM', liked: false }
-  ]);
+  const navigate = useNavigate();
+  
+  const [ideas, setIdeas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [newIdeaTitle, setNewIdeaTitle] = useState('');
   const [newIdeaContent, setNewIdeaContent] = useState('');
   const [newIdeaTag, setNewIdeaTag] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
 
-  const handleLike = (id) => {
+  // Fetch ideas on component mount
+  useEffect(() => {
+    fetchIdeas();
+  }, []);
+
+  const fetchIdeas = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllIdeas(1); // groupId = 1
+      
+      // Transform backend data to match our component structure
+      const transformedIdeas = data.map(idea => ({
+        id: idea.id,
+        author: idea.userInitials || idea.userName?.split(' ').map(n => n[0]).join('') || 'U',
+        title: idea.title,
+        content: idea.content,
+        tag: idea.tag || 'General',
+        likes: idea.voteCount || 0,
+        replies: idea.replyCount || 0,
+        time: new Date(idea.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        liked: idea.userHasVoted || false
+      }));
+      
+      setIdeas(transformedIdeas);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch ideas:', err);
+      setError('Failed to load ideas. Using demo data.');
+      // Keep mock data if fetch fails
+      setIdeas([
+        { id: 1, author: 'JR', title: 'Migration of to new IDE', content: 'I have recently heard about a new IDE that i believe would assist with our projects what do you guys think of moving our projects to it?', tag: 'Software', likes: 20, replies: 3, time: '09:17 AM', liked: false },
+        { id: 2, author: 'ME', title: 'New management', content: 'As we all know our previous group leader has quit so therefor I believe we should host a voting for a new leader on Friday.', tag: 'Organisation', likes: 14, replies: 6, time: '09:24 AM', liked: false }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async (id) => {
+    // Optimistic update
     setIdeas(ideas.map(idea => 
       idea.id === id 
         ? { ...idea, likes: idea.liked ? idea.likes - 1 : idea.likes + 1, liked: !idea.liked }
         : idea
     ));
+
+    try {
+      const userId = localStorage.getItem('userId') || 1;
+      await toggleVote(id, userId);
+    } catch (err) {
+      console.error('Failed to toggle vote:', err);
+    }
   };
 
-  const handlePostIdea = () => {
-    if (newIdeaTitle.trim() && newIdeaContent.trim()) {
-      const newIdea = {
-        id: ideas.length + 1,
+  const handlePostIdea = async () => {
+    if (!newIdeaTitle.trim() || !newIdeaContent.trim()) {
+      alert('Please enter both title and content');
+      return;
+    }
+
+    setIsPosting(true);
+    
+    try {
+      const newIdea = await createIdea({
+        title: newIdeaTitle,
+        content: newIdeaContent,
+        groupID: 1,
+      });
+
+      // Add new idea to the top of the list
+      const transformedIdea = {
+        id: newIdea.id || Date.now(),
         author: 'YOU',
         title: newIdeaTitle,
         content: newIdeaContent,
@@ -148,10 +216,18 @@ export default function CollaborationIdeas() {
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         liked: false
       };
-      setIdeas([newIdea, ...ideas]);
+
+      setIdeas([transformedIdea, ...ideas]);
       setNewIdeaTitle('');
       setNewIdeaContent('');
       setNewIdeaTag('');
+      
+      alert('✅ Idea posted successfully!');
+    } catch (err) {
+      console.error('Failed to post idea:', err);
+      alert('❌ Failed to post idea. Please try again.');
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -167,7 +243,6 @@ export default function CollaborationIdeas() {
       {/* Header */}
       <header className="border-b-[0.6px] border-black/75 px-5 py-4">
         <div className="flex items-center justify-between max-w-[1440px] mx-auto">
-          {/* Logo Section */}
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 bg-gradient-to-r from-orange-400 to-purple-400 rounded-lg flex items-center justify-center">
               <Lightbulb className="w-8 h-8 text-white" />
@@ -182,7 +257,6 @@ export default function CollaborationIdeas() {
             </h1>
           </div>
 
-          {/* User Actions */}
           <div className="flex items-center gap-6">
             <div className="relative">
               <Bell className="w-6 h-6 text-gray-700" />
@@ -208,12 +282,12 @@ export default function CollaborationIdeas() {
               <div className="w-full h-[1px] bg-white"></div>
             </div>
 
-            {/* Menu Items */}
             <div className="space-y-4">
               <SidebarMenuItem 
                 icon={FileText}
                 title="Resources"
                 description="Check out the resources"
+                onClick={() => navigate('/resources')}
               />
               
               <SidebarMenuItem 
@@ -227,16 +301,15 @@ export default function CollaborationIdeas() {
                 icon={MessageSquare}
                 title="General Chat"
                 description="Chat with your group"
+                onClick={() => alert('General Chat - Coming soon!')}
               />
             </div>
 
-            {/* Settings Icon at Bottom */}
             <div className="mt-auto pt-96">
               <Settings className="w-6 h-6 text-black" />
             </div>
           </div>
 
-          {/* Bottom Navigation Buttons */}
           <div className="mt-4 flex gap-3">
             <Button variant="primary" className="flex-1 rounded-[4px]" onClick={() => navigate('/home-page')}>
               Home
@@ -249,8 +322,13 @@ export default function CollaborationIdeas() {
 
         {/* Main Content Area */}
         <main className="flex-1 p-6 border-l-[0.6px] border-black/75">
-          {/* Group Header */}
           <div className="mb-8">
+            {error && (
+              <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded-lg text-yellow-800 text-sm">
+                ⚠️ {error}
+              </div>
+            )}
+            
             <div className="flex items-center justify-between">
               <h2 className="text-4xl font-light" style={{
                 background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(90deg, rgba(246, 157, 75, 0.96) 0%, rgba(177, 155, 217, 0.96) 74.04%)',
@@ -264,21 +342,28 @@ export default function CollaborationIdeas() {
                 {teamMembers.map(member => (
                   <TeamAvatar key={member.id} emoji={member.emoji} />
                 ))}
-                <button className="w-14 h-14 rounded-full bg-gradient-to-br from-[#F69D4B]/90 via-[#CEA8A3]/90 via-[#A6B3FA]/90 to-[#BDB5FD]/90 flex items-center justify-center text-white shadow hover:opacity-90 transition">
+                <button className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow hover:opacity-90 transition" style={{
+                  background: 'linear-gradient(317.49deg, rgba(246, 157, 75, 0.9) 23.12%, rgba(206, 168, 163, 0.9) 30.11%, rgba(166, 179, 250, 0.9) 40.46%, rgba(189, 181, 253, 0.9) 55.21%)'
+                }}>
                   <Plus className="w-6 h-6 stroke-[4px]" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Ideas Feed */}
-          <div className="space-y-6 mb-6">
-            {ideas.map((idea) => (
-              <IdeaCard key={idea.id} idea={idea} onLike={handleLike} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-4 text-gray-600">Loading ideas...</p>
+            </div>
+          ) : (
+            <div className="space-y-6 mb-6">
+              {ideas.map((idea) => (
+                <IdeaCard key={idea.id} idea={idea} onLike={handleLike} />
+              ))}
+            </div>
+          )}
 
-          {/* New Idea Input Section */}
           <div className="bg-gray-200/50 rounded-lg p-6">
             <div className="flex gap-4 mb-4">
               <Input
@@ -306,9 +391,14 @@ export default function CollaborationIdeas() {
               />
               <button
                 onClick={handlePostIdea}
-                className="w-[84px] h-16 bg-[#EEEBEF] rounded-lg flex items-center justify-center hover:bg-gray-300 transition"
+                disabled={isPosting}
+                className="w-[84px] h-16 bg-[#EEEBEF] rounded-lg flex items-center justify-center hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="w-8 h-8 text-gray-700" />
+                {isPosting ? (
+                  <div className="w-6 h-6 border-3 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Send className="w-8 h-8 text-gray-700" />
+                )}
               </button>
             </div>
           </div>
