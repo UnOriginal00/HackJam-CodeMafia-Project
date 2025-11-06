@@ -3,6 +3,8 @@ using backend.Services;
 using backend.Models.DTOs;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace backend.Controllers
 {
@@ -123,6 +125,60 @@ namespace backend.Controllers
             var group = await _groupsService.GetGroupByIdAsync(groupId);
             if (group == null) return NotFound(new { message = "Group not found." });
             return Ok(group);
+        }
+
+        // NEW: GET /api/groups/user/{userId} - returns user's groups (quick-view up to MaxGroupsPerUser)
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetGroupsForUser(int userId)
+        {
+            try
+            {
+                var list = await _groupsService.GetGroupsForUserAsync(userId);
+                return Ok(list);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to fetch groups.", detail = ex.Message });
+            }
+        }
+
+        // NEW: GET /api/groups/me - returns groups for the authenticated user (requires Authorization)
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyGroups()
+        {
+            try
+            {
+                // try typical claim types for user id
+                var idClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("nameid") ?? User.FindFirst("sub");
+                if (idClaim == null) return Unauthorized(new { message = "User id claim missing." });
+
+                if (!int.TryParse(idClaim.Value, out var userId))
+                    return BadRequest(new { message = "Invalid user id in claims." });
+
+                var list = await _groupsService.GetGroupsForUserAsync(userId);
+                return Ok(list);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to fetch groups.", detail = ex.Message });
+            }
         }
     }
 }

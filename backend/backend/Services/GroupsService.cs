@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using backend.Data;
 using backend.Models;
@@ -153,6 +155,36 @@ namespace backend.Services
         {
             if (groupId <= 0) return null;
             return await _context.group_Lists.AsNoTracking().FirstOrDefaultAsync(g => g.GroupId == groupId);
+        }
+
+        // NEW: return user's groups (up to `limit` or MaxGroupsPerUser). Read-only.
+        public async Task<IEnumerable<Group_List>> GetGroupsForUserAsync(int userId, int? limit = null)
+        {
+            if (userId <= 0) throw new ArgumentException("Invalid user id.", nameof(userId));
+
+            // Ensure user exists
+            var userExists = await _context.Users.AnyAsync(u => u.UserId == userId);
+            if (!userExists) throw new InvalidOperationException("User does not exist.");
+
+            // Find group ids from the join table (User_Groups)
+            var groupIds = await _context.UserGroups
+                .AsNoTracking()
+                .Where(ug => ug.UserId == userId)
+                .Select(ug => ug.GroupId)
+                .ToListAsync();
+
+            if (groupIds == null || groupIds.Count == 0) return Array.Empty<Group_List>();
+
+            var take = limit.HasValue ? Math.Max(0, limit.Value) : MaxGroupsPerUser;
+
+            var groups = await _context.group_Lists
+                .AsNoTracking()
+                .Where(g => groupIds.Contains(g.GroupId))
+                .OrderByDescending(g => g.CreatedDate)
+                .Take(take)
+                .ToListAsync();
+
+            return groups;
         }
     }
 }

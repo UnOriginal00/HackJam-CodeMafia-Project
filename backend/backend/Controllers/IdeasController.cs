@@ -115,5 +115,28 @@ namespace backend.Controllers
                 return StatusCode(500, new { message = "Failed to delete idea.", detail = ex.Message });
             }
         }
+
+        // GET /api/ideas/group/{groupId}
+        [HttpGet("group/{groupId}")]
+        public async Task<IActionResult> GetIdeasByGroup(int groupId)
+        {
+            try
+            {
+                var list = await _ideasService.GetIdeasByGroupAsync(groupId);
+                return Ok(list);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to fetch ideas.", detail = ex.Message });
+            }
+        }
     }
 }

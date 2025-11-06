@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using backend.Data;
 using backend.Models;
@@ -83,6 +85,21 @@ namespace backend.Services
 
             _context.ideas.Remove(idea);
             await _context.SaveChangesAsync();
+        }
+
+        // new: return all ideas for a group (most recent first)
+        public async Task<IEnumerable<Ideas>> GetIdeasByGroupAsync(int groupId)
+        {
+            if (groupId <= 0) throw new ArgumentException("Invalid group id.", nameof(groupId));
+
+            var groupExists = await _context.group_Lists.AnyAsync(g => g.GroupId == groupId);
+            if (!groupExists) throw new InvalidOperationException("Group does not exist.");
+
+            return await _context.ideas
+                .AsNoTracking()
+                .Where(i => i.GroupID == groupId)
+                .OrderByDescending(i => i.CreatedDate)
+                .ToListAsync();
         }
     }
 }
