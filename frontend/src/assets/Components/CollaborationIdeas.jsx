@@ -1,7 +1,7 @@
 // CollaborationIdeas.jsx - COMPLETE VERSION
 // Replace: frontend/src/assets/Components/CollaborationIdeas.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User, FileText, Lightbulb, MessageSquare, Settings, ThumbsUp, Plus, Send } from 'lucide-react';
 import { getAllIdeas, createIdea, toggleVote } from '../../services/ideasService';
@@ -129,6 +129,7 @@ export default function CollaborationIdeas() {
   const [ideas, setIdeas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const ideasContainerRef = useRef(null);
 
   const [newIdeaTitle, setNewIdeaTitle] = useState('');
   const [newIdeaContent, setNewIdeaContent] = useState('');
@@ -146,19 +147,27 @@ export default function CollaborationIdeas() {
       const data = await getAllIdeas(1); // groupId = 1
       
       // Transform backend data to match our component structure
-      const transformedIdeas = data.map(idea => ({
-        id: idea.id,
-        author: idea.userInitials || idea.userName?.split(' ').map(n => n[0]).join('') || 'U',
-        title: idea.title,
-        content: idea.content,
-        tag: idea.tag || 'General',
-        likes: idea.voteCount || 0,
-        replies: idea.replyCount || 0,
-        time: new Date(idea.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        liked: idea.userHasVoted || false
-      }));
+      const transformedIdeas = data.map(idea => {
+        const id = idea.id || idea.ideaId || idea.IdeaId || idea.IdeaID || null;
+        const createdAt = idea.createdAt || idea.createdAt || idea.CreatedDate || idea.createdDate || null;
+        const title = idea.title || idea.Title || '';
+        const content = idea.content || idea.Content || '';
+        const author = idea.userInitials || idea.userName?.split(' ').map(n => n[0]).join('') || (idea.userId ? String(idea.userId) : 'U');
+        return {
+          id,
+          author,
+          title,
+          content,
+          tag: idea.tag || 'General',
+          likes: idea.voteCount || idea.upVotes || 0,
+          replies: idea.replyCount || 0,
+          time: createdAt ? new Date(createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
+          liked: idea.userHasVoted || false
+        };
+      });
       
-      setIdeas(transformedIdeas);
+  // backend returns most-recent-first; display oldest-first so new ideas append to bottom
+  setIdeas(transformedIdeas.reverse());
       setError(null);
     } catch (err) {
       console.error('Failed to fetch ideas:', err);
@@ -202,11 +211,12 @@ export default function CollaborationIdeas() {
         title: newIdeaTitle,
         content: newIdeaContent,
         groupID: 1,
+        // createIdea service will fill userID from localStorage if missing
       });
 
       // Add new idea to the top of the list
       const transformedIdea = {
-        id: newIdea.id || Date.now(),
+        id: newIdea.id || newIdea.ideaId || newIdea.IdeaId || newIdea.IdeaID || Date.now(),
         author: 'YOU',
         title: newIdeaTitle,
         content: newIdeaContent,
@@ -217,7 +227,8 @@ export default function CollaborationIdeas() {
         liked: false
       };
 
-      setIdeas([transformedIdea, ...ideas]);
+  // append to the end so newest appears at bottom
+  setIdeas([...ideas, transformedIdea]);
       setNewIdeaTitle('');
       setNewIdeaContent('');
       setNewIdeaTag('');
@@ -230,6 +241,13 @@ export default function CollaborationIdeas() {
       setIsPosting(false);
     }
   };
+
+  // scroll to bottom when ideas change
+  useEffect(() => {
+    if (ideasContainerRef.current) {
+      ideasContainerRef.current.scrollTop = ideasContainerRef.current.scrollHeight;
+    }
+  }, [ideas]);
 
   const teamMembers = [
     { id: 1, emoji: '👨‍💼' },
@@ -357,14 +375,15 @@ export default function CollaborationIdeas() {
               <p className="mt-4 text-gray-600">Loading ideas...</p>
             </div>
           ) : (
-            <div className="space-y-6 mb-6">
+            // ideas container (scrollable). ensure it grows to fill space so input block stays at bottom
+            <div ref={ideasContainerRef} className="flex-1 overflow-y-auto mb-6 space-y-6">
               {ideas.map((idea) => (
                 <IdeaCard key={idea.id} idea={idea} onLike={handleLike} />
               ))}
             </div>
           )}
 
-          <div className="bg-gray-200/50 rounded-lg p-6">
+          <div className="bg-gray-200/50 rounded-lg p-6 mt-auto">
             <div className="flex gap-4 mb-4">
               <Input
                 placeholder="Idea"
