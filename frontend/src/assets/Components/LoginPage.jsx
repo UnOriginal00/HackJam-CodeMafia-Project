@@ -1,14 +1,53 @@
 import { Link, useNavigate } from "react-router-dom"
 import MainLogo from "../Icons/MainLogo.svg"
 import Arrow from "../Icons/Arrow.svg"
+import { useState } from "react";
 
 export default function LoginPage(){
+    const [user, setUser] = useState({
+        email : '',
+        password : '',
+    });
 
     const route = useNavigate();
 
     const switchPage = () => {
     route("/home-page");
     };
+
+    const handleChange = (e) => {
+        const {name, value} = e.target;
+        setUser(prev => ({...prev, [name] : value}))
+    }
+
+    const submit = async () => {
+        if(!user.email || !user.password){
+            alert("Please fill in both email and password fields");
+            return;
+        }
+
+        const response = {
+            email : user.email,
+            password : user.password
+        };
+
+        try{
+            const data = await fetch('https://localhost:7122/api/authentication/login', {
+                method : 'POST',
+                headers : {'Content-Type' : 'application/json'},
+                body : JSON.stringify(response)
+            })
+
+            if(!data.ok){
+                throw new Error("Failed to login into account");
+            }
+
+            route('/home-page');
+        }
+        catch (error){
+            console.error(error);
+        }
+    }
 
     return(
     <>
@@ -26,13 +65,15 @@ export default function LoginPage(){
                 {/*Email section*/}
                 <div className="py-2">
                     <p className="text-[#000000]">Email Address</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" placeholder=" Enter your Email" autoFocus></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" name="email" placeholder=" Enter your Email" autoFocus value={user.name} onChange={handleChange}>
+                    </input>
                 </div>
 
                 {/*Password section*/}
                 <div className="pt-2 pb-1.5">
                     <p className="text-[#000000]">Password</p>
-                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" placeholder=" Enter your Password" type="password"></input>
+                    <input className="outline-solid outline-violet-400 outline-2 rounded-sm text-[#000000] w-full h-8 pl-2" name="password" placeholder=" Enter your Password" type="password" value={user.name} onChange={handleChange}>
+                    </input>
                 </div>
 
                 <div className="flex flex-row justify-between pb-8 pt-2">
@@ -43,7 +84,7 @@ export default function LoginPage(){
                     <p className="text-violet-400"><u>Forgot Password?</u></p>
                 </div>
 
-                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] rounded-md h-10" onClick={switchPage}>
+                <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] rounded-md h-10" onClick={submit}>
                     <div className="text-sm flex flex-row justify-center cursor-pointer">Sign In <img className="size-5 pt-0.5 pl-1.5" src={Arrow}/></div>
                 </button>
 

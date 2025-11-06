@@ -85,6 +85,7 @@ export default function MyDeskPage(){
 
                     <div className="mt-2 lg:col-span-2">
                         <div className="flex flex-row lg:mt-32">
+                            
                             <textarea className="resize-none w-95 h-12 bg-gray-300 rounded-sm pl-2 pt-2 lg:w-165 lg:-ml-2" type="text" placeholder="Type a message..."></textarea>
                         </div>
                     </div>
