@@ -2,7 +2,7 @@
 // Replace: frontend/src/assets/Components/CollaborationIdeas.jsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { Search, Bell, User, FileText, Lightbulb, MessageSquare, Settings, ThumbsUp, Plus, Send } from 'lucide-react';
 import { getAllIdeas, createIdea, toggleVote } from '../../services/ideasService';
 
@@ -75,38 +75,46 @@ const Input = ({ placeholder, value, onChange, onKeyPress, className = '' }) => 
   />
 );
 
-// Idea Card Component
-const IdeaCard = ({ idea, onLike }) => (
-  <div className="bg-white rounded-[51px] shadow-lg p-8">
-    <div className="flex items-start gap-4">
-      <Avatar initials={idea.author} size="md" />
-      <div className="flex-1">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-normal">{idea.title}</h3>
-          <TagBadge tag={idea.tag} />
-        </div>
-        <div className="w-full h-[1px] bg-black mb-3"></div>
-        <p className="text-gray-800 mb-4 leading-relaxed font-normal">{idea.content}</p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6 text-gray-600">
-            <button 
-              onClick={() => onLike(idea.id)}
-              className={`flex items-center gap-2 hover:text-gray-900 transition ${idea.liked ? 'text-purple-600' : ''}`}
-            >
-              <ThumbsUp className={`w-5 h-5 ${idea.liked ? 'fill-purple-600' : ''}`} />
-              <span className="text-sm">{idea.likes}</span>
-            </button>
-            <button className="flex items-center gap-2 hover:text-gray-900 transition">
-              <MessageSquare className="w-5 h-5" />
-              <span className="text-sm">{idea.replies} replies</span>
-            </button>
+// Idea Card Component (supports chat-style alignment via isMine)
+const IdeaCard = ({ idea, onLike }) => {
+  const isMine = !!idea.isMine;
+  const containerClass = isMine ? 'justify-end' : 'justify-start';
+  const bubbleClass = isMine
+    ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
+    : 'bg-white text-gray-900';
+
+  return (
+    <div className={`w-full flex ${containerClass}`}>
+  <div className={`max-w-[720px] w-auto min-w-[550px] ${isMine ? 'ml-8' : 'mr-8'}`}>
+        <div className={`rounded-[20px] p-6 shadow ${bubbleClass}`}> 
+          <div className="flex items-center justify-between mb-2">
+            <h3 className={`text-xl font-normal ${isMine ? 'text-white' : ''}`}>{idea.title}</h3>
+            <TagBadge tag={idea.tag} />
           </div>
-          <div className="text-sm text-gray-600">{idea.time}</div>
+          <div className="w-full h-[1px] bg-black/10 mb-3"></div>
+          <p className={`mb-4 leading-relaxed font-normal ${isMine ? 'text-white' : 'text-gray-800'}`}>{idea.content}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-gray-600">
+              <button 
+                onClick={() => onLike(idea.id)}
+                className={`flex items-center gap-2 hover:text-gray-900 transition ${idea.liked ? 'text-yellow-300' : ''}`}
+                aria-label="Like idea"
+              >
+                <ThumbsUp className={`w-5 h-5 ${idea.liked ? 'fill-current' : ''}`} />
+                <span className="text-sm">{idea.likes}</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                <span className="text-sm">{idea.replies} replies</span>
+              </div>
+            </div>
+            <div className={`text-sm ${isMine ? 'text-white/80' : 'text-gray-600'}`}>{idea.time}</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Sidebar Menu Item Component
 const SidebarMenuItem = ({ icon: Icon, title, description, active = false, onClick }) => (
@@ -123,39 +131,67 @@ const SidebarMenuItem = ({ icon: Icon, title, description, active = false, onCli
 );
 
 // Main Component
-export default function CollaborationIdeas() {
+export default function CollaborationIdeas(props) {
   const navigate = useNavigate();
   
   const [ideas, setIdeas] = useState([]);
+  // prefer selectedGroup passed from layout (props), otherwise use local state
+  const [localSelectedGroup, setLocalSelectedGroup] = useState(null);
+  const outlet = useOutletContext ? useOutletContext() : null;
+  const selectedGroup = props.selectedGroup ?? outlet?.selectedGroup ?? localSelectedGroup;
+  const setSelectedGroup = props.setSelectedGroup ?? outlet?.setSelectedGroup ?? setLocalSelectedGroup;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const ideasContainerRef = useRef(null);
+  const location = useLocation();
 
   const [newIdeaTitle, setNewIdeaTitle] = useState('');
   const [newIdeaContent, setNewIdeaContent] = useState('');
   const [newIdeaTag, setNewIdeaTag] = useState('');
   const [isPosting, setIsPosting] = useState(false);
 
-  // Fetch ideas on component mount
+  // Fetch ideas whenever selectedGroup changes. Also accept a group passed via navigation state
   useEffect(() => {
+    // Do not auto-set selectedGroup from navigation state to avoid resurrecting selection when
+    // navigating back to the group list. Selection should be managed by CollabLayout / outlet context.
     fetchIdeas();
-  }, []);
+  }, [selectedGroup]);
 
   const fetchIdeas = async () => {
     try {
       setLoading(true);
-      const data = await getAllIdeas(1); // groupId = 1
+      // do not fetch if there is no selected group
+      if (!selectedGroup) {
+        setIdeas([]);
+        setLoading(false);
+        return;
+      }
+      const data = await getAllIdeas(selectedGroup.groupId);
       
       // Transform backend data to match our component structure
+      // determine current user id from stored profile
+      let currentUserId = null;
+      try {
+        const profile = JSON.parse(localStorage.getItem('jwt_profile') || '{}');
+        currentUserId = profile?.userId ?? profile?.id ?? null;
+      } catch (e) {
+        currentUserId = null;
+      }
+
       const transformedIdeas = data.map(idea => {
         const id = idea.id || idea.ideaId || idea.IdeaId || idea.IdeaID || null;
-        const createdAt = idea.createdAt || idea.createdAt || idea.CreatedDate || idea.createdDate || null;
+        const createdAt = idea.createdAt || idea.CreatedDate || idea.createdDate || null;
         const title = idea.title || idea.Title || '';
         const content = idea.content || idea.Content || '';
-        const author = idea.userInitials || idea.userName?.split(' ').map(n => n[0]).join('') || (idea.userId ? String(idea.userId) : 'U');
+        const authorId = idea.userId || idea.user_id || idea.authorId || null;
+        const author = idea.userInitials || idea.userName?.split(' ').map(n => n[0]).join('') || (authorId ? String(authorId) : 'U');
+        const isMine = authorId && currentUserId && String(authorId) === String(currentUserId);
+
         return {
           id,
           author,
+          authorId,
+          isMine,
           title,
           content,
           tag: idea.tag || 'General',
@@ -207,17 +243,31 @@ export default function CollaborationIdeas() {
     setIsPosting(true);
     
     try {
+      if (!selectedGroup) {
+        alert('Please select a group before posting an idea.');
+        return;
+      }
       const newIdea = await createIdea({
         title: newIdeaTitle,
         content: newIdeaContent,
-        groupID: 1,
+        groupID: selectedGroup.groupId,
         // createIdea service will fill userID from localStorage if missing
       });
 
-      // Add new idea to the top of the list
+      // Add new idea to the list (mark as mine)
+      let currentUserId = null;
+      try {
+        const profile = JSON.parse(localStorage.getItem('jwt_profile') || '{}');
+        currentUserId = profile?.userId ?? profile?.id ?? null;
+      } catch (e) {
+        currentUserId = null;
+      }
+
       const transformedIdea = {
         id: newIdea.id || newIdea.ideaId || newIdea.IdeaId || newIdea.IdeaID || Date.now(),
         author: 'YOU',
+        authorId: currentUserId,
+        isMine: true,
         title: newIdeaTitle,
         content: newIdeaContent,
         tag: newIdeaTag || 'General',
@@ -227,8 +277,8 @@ export default function CollaborationIdeas() {
         liked: false
       };
 
-  // append to the end so newest appears at bottom
-  setIdeas([...ideas, transformedIdea]);
+      // append to the end so newest appears at bottom
+      setIdeas([...ideas, transformedIdea]);
       setNewIdeaTitle('');
       setNewIdeaContent('');
       setNewIdeaTag('');
@@ -257,172 +307,64 @@ export default function CollaborationIdeas() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FEFEFE]" style={{ fontFamily: 'Krub, sans-serif' }}>
-      {/* Header */}
-      <header className="border-b-[0.6px] border-black/75 px-5 py-4">
-        <div className="flex items-center justify-between max-w-[1440px] mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-r from-orange-400 to-purple-400 rounded-lg flex items-center justify-center">
-              <Lightbulb className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-4xl font-semibold" style={{
-              background: 'linear-gradient(90deg, rgba(246, 157, 75, 0.96) 0%, rgba(177, 155, 217, 0.96) 74.04%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              Innovation Lounge
-            </h1>
+    <>
+      {error && (
+        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded-lg text-yellow-800 text-sm">⚠️ {error}</div>
+      )}
+      <div className="mb-6" />
+
+      {!selectedGroup ? (
+        <div className="p-8 bg-white rounded shadow-md">
+          <h3 className="text-xl font-medium mb-2">No group selected</h3>
+          <p className="text-gray-600 mb-4">You are not currently in a group or haven't selected one. Collaboration features (ideas, chat, resources) are available when you enter a group.</p>
+          <div className="flex gap-2">
+            <button onClick={() => navigate('/home-page/groups')} className="px-4 py-2 bg-purple-500 text-white rounded">Open Your Groups</button>
+          </div>
+        </div>
+      ) : loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading ideas...</p>
+        </div>
+      ) : (
+        <div className="relative">
+          {/* Make the list take available viewport height minus header/composer so it scrolls independently */}
+          <div ref={ideasContainerRef} className="overflow-y-auto mb-6 space-y-6 pb-40" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+              {ideas.map((idea) => (<IdeaCard key={idea.id} idea={idea} onLike={handleLike} />))}
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Bell className="w-6 h-6 text-gray-700" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F24822] text-white text-xs rounded-full flex items-center justify-center font-normal">
-                3
-              </span>
-            </div>
-            <div className="w-16 h-16 bg-blue-500 rounded-[21px] flex items-center justify-center overflow-hidden">
-              <User className="w-8 h-8 text-white" />
+          {/* Composer fixed to the viewport bottom so it remains visible while scrolling */}
+          <div className="fixed bottom-0 left-[339px] right-0 z-50">
+            <div className="max-w-[1100px] mx-auto px-6">
+              <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 p-6 rounded-t-xl shadow-lg">
+                <div className="flex gap-4 mb-4">
+                  <Input placeholder={selectedGroup ? 'Title' : 'Select a group to post ideas'} value={newIdeaTitle} onChange={(e) => setNewIdeaTitle(e.target.value)} className="w-1/3" disabled={!selectedGroup} />
+                  <div className="w-[1px] h-12 bg-black/10"></div>
+                  <input type="text" placeholder={selectedGroup ? 'Tag' : 'Group required'} value={newIdeaTag} onChange={(e) => setNewIdeaTag(e.target.value)} className="px-4 py-2 bg-[#F3EFFF] text-black rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-black font-light text-lg" disabled={!selectedGroup} />
+                </div>
+
+                <div className="flex gap-4 items-start">
+                  <textarea
+                    placeholder={selectedGroup ? 'Explain your idea...' : 'Select a group to enable posting'}
+                    value={newIdeaContent}
+                    onChange={(e) => setNewIdeaContent(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { handlePostIdea(); } }}
+                    className="flex-1 px-4 py-3 min-h-[92px] rounded-lg border border-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 font-light text-lg"
+                    disabled={!selectedGroup}
+                  />
+
+                  <div className="flex flex-col items-center">
+                    <button onClick={handlePostIdea} disabled={isPosting || !selectedGroup} className="w-20 h-12 bg-purple-500 text-white rounded-lg flex items-center justify-center hover:bg-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                      {isPosting ? (<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>) : (<Send className="w-5 h-5 text-white" />)}
+                    </button>
+                    <div className="text-xs text-gray-500 mt-2">Press Ctrl+Enter to submit</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </header>
-
-      <div className="flex max-w-[1440px] mx-auto">
-        {/* Sidebar */}
-        <aside className="w-[339px] p-5">
-          <div className="rounded-[4.5px] p-6 min-h-[782px]" style={{
-            background: 'linear-gradient(317.49deg, rgba(246, 157, 75, 0.9) 23.12%, rgba(206, 168, 163, 0.9) 30.11%, rgba(166, 179, 250, 0.9) 40.46%, rgba(189, 181, 253, 0.9) 55.21%)'
-          }}>
-            <div className="mb-8">
-              <h2 className="text-4xl font-semibold text-[#F7F6FD] mb-2">Features</h2>
-              <div className="w-full h-[1px] bg-white"></div>
-            </div>
-
-            <div className="space-y-4">
-              <SidebarMenuItem 
-                icon={FileText}
-                title="Resources"
-                description="Check out the resources"
-                onClick={() => navigate('/resources')}
-              />
-              
-              <SidebarMenuItem 
-                icon={Lightbulb}
-                title="Ideas"
-                description="Note down new ideas"
-                active={true}
-              />
-              
-              <SidebarMenuItem 
-                icon={MessageSquare}
-                title="General Chat"
-                description="Chat with your group"
-                onClick={() => alert('General Chat - Coming soon!')}
-              />
-            </div>
-
-            <div className="mt-auto pt-96">
-              <Settings className="w-6 h-6 text-black" />
-            </div>
-          </div>
-
-          <div className="mt-4 flex gap-3">
-            <Button variant="primary" className="flex-1 rounded-[4px]" onClick={() => navigate('/home-page')}>
-              Home
-            </Button>
-            <Button variant="secondary" className="flex-1 rounded-[4px]" onClick={() => navigate('/home-page/MyDeskPage')}>
-              MyDesk
-            </Button>
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <main className="flex-1 p-6 border-l-[0.6px] border-black/75">
-          <div className="mb-8">
-            {error && (
-              <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded-lg text-yellow-800 text-sm">
-                ⚠️ {error}
-              </div>
-            )}
-            
-            <div className="flex items-center justify-between">
-              <h2 className="text-4xl font-light" style={{
-                background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(90deg, rgba(246, 157, 75, 0.96) 0%, rgba(177, 155, 217, 0.96) 74.04%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>
-                Side Projects Group
-              </h2>
-              <div className="flex items-center gap-3">
-                {teamMembers.map(member => (
-                  <TeamAvatar key={member.id} emoji={member.emoji} />
-                ))}
-                <button className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow hover:opacity-90 transition" style={{
-                  background: 'linear-gradient(317.49deg, rgba(246, 157, 75, 0.9) 23.12%, rgba(206, 168, 163, 0.9) 30.11%, rgba(166, 179, 250, 0.9) 40.46%, rgba(189, 181, 253, 0.9) 55.21%)'
-                }}>
-                  <Plus className="w-6 h-6 stroke-[4px]" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-4 text-gray-600">Loading ideas...</p>
-            </div>
-          ) : (
-            // ideas container (scrollable). ensure it grows to fill space so input block stays at bottom
-            <div ref={ideasContainerRef} className="flex-1 overflow-y-auto mb-6 space-y-6">
-              {ideas.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} onLike={handleLike} />
-              ))}
-            </div>
-          )}
-
-          <div className="bg-gray-200/50 rounded-lg p-6 mt-auto">
-            <div className="flex gap-4 mb-4">
-              <Input
-                placeholder="Idea"
-                value={newIdeaTitle}
-                onChange={(e) => setNewIdeaTitle(e.target.value)}
-                className="w-64"
-              />
-              <div className="w-[1px] h-12 bg-black/90"></div>
-              <input
-                type="text"
-                placeholder="Tag"
-                value={newIdeaTag}
-                onChange={(e) => setNewIdeaTag(e.target.value)}
-                className="px-4 py-2 bg-[#B19BD9] text-black rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-black font-light text-lg"
-              />
-            </div>
-            <div className="flex gap-4">
-              <Input
-                placeholder="Explain your Idea ...."
-                value={newIdeaContent}
-                onChange={(e) => setNewIdeaContent(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handlePostIdea()}
-                className="flex-1"
-              />
-              <button
-                onClick={handlePostIdea}
-                disabled={isPosting}
-                className="w-[84px] h-16 bg-[#EEEBEF] rounded-lg flex items-center justify-center hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isPosting ? (
-                  <div className="w-6 h-6 border-3 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <Send className="w-8 h-8 text-gray-700" />
-                )}
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
