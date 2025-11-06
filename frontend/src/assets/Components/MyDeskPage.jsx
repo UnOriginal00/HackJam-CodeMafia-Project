@@ -52,6 +52,22 @@ const SidebarMenuItem = ({
   );
 };
 
+// Simple Bot Icon (inline SVG)
+const BotIcon = ({ className = "w-8 h-8 flex-shrink-0 text-black" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <rect x="3" y="7" width="18" height="10" rx="2" ry="2" fill="currentColor" />
+    <circle cx="8" cy="12" r="1.2" fill="#fff" />
+    <circle cx="16" cy="12" r="1.2" fill="#fff" />
+    <rect x="9" y="15" width="6" height="1" rx="0.5" ry="0.5" fill="#fff" />
+    <rect x="11" y="4" width="2" height="3" rx="0.5" ry="0.5" fill="currentColor" />
+  </svg>
+);
+
 // Input Component
 const Input = ({
   placeholder,
@@ -213,10 +229,9 @@ export default function CollaborationIdeas() {
                 active={true}
               />
               <SidebarMenuItem
-                icon={MessageSquare}
-                title="Collab Zone"
-                description="Go to collab page"
-                onClick={goCollab}
+                icon={BotIcon}
+                title="AI companion"
+                description="Your personal AI companion"
               />
             </div>
 
