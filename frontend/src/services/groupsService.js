@@ -22,3 +22,36 @@ export async function getGroupsForUser(userId) {
     role: g.role ?? null
   }));
 }
+
+// Create a new group. Payload: { groupName, description, creatorUserID? }
+export async function createGroup(payload) {
+  const profile = JSON.parse(localStorage.getItem('jwt_profile') || 'null') || {};
+  const body = {
+    creatorUserID: Number(payload.creatorUserID || profile?.userId || profile?.UserId || profile?.id || 1),
+    groupName: payload.groupName,
+    description: payload.description || ''
+  };
+
+  const res = await api.post('/groups', body);
+  return res.data;
+}
+
+// Get group details by id (returns Group_List shape)
+export async function getGroupDetails(groupId) {
+  const res = await api.get(`/groups/${groupId}`);
+  return res.data;
+}
+
+// Rename group (caller should be the creator)
+export async function renameGroup(groupId, newName, creatorUserID) {
+  const body = { creatorUserID: Number(creatorUserID), groupID: Number(groupId), newName };
+  const res = await api.put(`/groups/${groupId}/rename`, body);
+  return res.status === 204;
+}
+
+// Delete group (caller should be the creator)
+export async function deleteGroup(groupId, creatorUserID) {
+  const body = { creatorUserID: Number(creatorUserID), groupID: Number(groupId) };
+  const res = await api.request({ url: `/groups/${groupId}`, method: 'DELETE', data: body });
+  return res.status === 204;
+}

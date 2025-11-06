@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { Lightbulb, Bell, User, FileText, MessageSquare, Settings, Plus } from 'lucide-react';
 import GroupsQuickView from './GroupsQuickView';
+import CreateGroupModal from './CreateGroupModal';
+import GroupSettingsModal from './GroupSettingsModal';
 
 const Button = ({ children, variant = 'primary', onClick, className = '' }) => {
   const variants = {
@@ -38,6 +40,8 @@ export default function CollabLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedGroup, setSelectedGroup] = React.useState(null);
+  const [createModalOpen, setCreateModalOpen] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   return (
     <div className="min-h-screen bg-[#FEFEFE]" style={{ fontFamily: 'Krub, sans-serif' }}>
@@ -94,7 +98,16 @@ export default function CollabLayout({ children }) {
               </div>
             </div>
 
-            <div className="mt-auto pt-96"><Settings className="w-6 h-6 text-black" /></div>
+            <div className="mt-auto pt-96">
+              {selectedGroup ? (
+                <button onClick={() => setSettingsOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-white/90 rounded">
+                  <Settings className="w-6 h-6 text-black" />
+                  <span className="text-sm">Settings</span>
+                </button>
+              ) : (
+                <div className="text-sm text-white/60">Group settings available when a group is selected</div>
+              )}
+            </div>
           </div>
 
           <div className="mt-4 flex gap-3">
@@ -120,7 +133,27 @@ export default function CollabLayout({ children }) {
 
               <div className="flex items-center gap-3">
                 <GroupsQuickView onSelect={(g) => { setSelectedGroup(g); navigate('/home-page/Collab/ideas'); }} selectedGroupId={selectedGroup?.groupId} />
-                <button className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow hover:opacity-90 transition" style={{ background: 'linear-gradient(317.49deg, rgba(246, 157, 75, 0.9) 23.12%, rgba(206, 168, 163, 0.9) 30.11%, rgba(166, 179, 250, 0.9) 40.46%, rgba(189, 181, 253, 0.9) 55.21%)' }}><Plus className="w-6 h-6 stroke-[4px]" /></button>
+                <button onClick={() => setCreateModalOpen(true)} className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow hover:opacity-90 transition" style={{ background: 'linear-gradient(317.49deg, rgba(246, 157, 75, 0.9) 23.12%, rgba(206, 168, 163, 0.9) 30.11%, rgba(166, 179, 250, 0.9) 40.46%, rgba(189, 181, 253, 0.9) 55.21%)' }}><Plus className="w-6 h-6 stroke-[4px]" /></button>
+                <CreateGroupModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} onCreated={(g) => {
+                  // normalize returned group and select it
+                  const norm = {
+                    groupId: g.groupId ?? g.groupId ?? g.GroupId,
+                    name: g.groupName ?? g.groupName ?? g.GroupName ?? g.group_name ?? g.GroupName,
+                    description: g.description ?? g.Description ?? ''
+                  };
+                  setSelectedGroup(norm);
+                  setCreateModalOpen(false);
+                  navigate('/home-page/Collab/ideas');
+                }} />
+                <GroupSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} groupId={selectedGroup?.groupId} onDeleted={() => {
+                  // after delete, clear selection and navigate back to groups index
+                  setSelectedGroup(null);
+                  setSettingsOpen(false);
+                  navigate('/home-page/Collab');
+                }} onRenamed={(newName) => {
+                  // update local selectedGroup name
+                  setSelectedGroup(prev => prev ? { ...prev, name: newName } : prev);
+                }} />
               </div>
             </div>
           </div>
