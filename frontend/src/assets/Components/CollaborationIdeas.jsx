@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User, FileText, Lightbulb, MessageSquare, Settings, ThumbsUp, Plus, Send } from 'lucide-react';
 
 // Avatar Component
@@ -16,7 +17,7 @@ const Avatar = ({ initials, size = 'md' }) => {
   );
 };
 
-// Team Avatar Component (with images/emojis)
+// Team Avatar Component
 const TeamAvatar = ({ emoji, size = 'md' }) => {
   const sizes = {
     sm: 'w-10 h-10 text-xl',
@@ -50,118 +51,76 @@ const Button = ({ children, variant = 'primary', onClick, className = '' }) => {
 };
 
 // Tag Badge Component
-const TagBadge = ({ tag }) => {
-  return (
-    <span className="px-4 py-1 bg-gradient-to-r from-orange-400 via-pink-200 to-purple-400 rounded-full text-xs font-normal text-black">
-      {tag}
-    </span>
-  );
-};
+const TagBadge = ({ tag }) => (
+  <span className="px-4 py-1 bg-gradient-to-r from-orange-400 via-pink-200 to-purple-400 rounded-full text-xs font-normal text-black">
+    {tag}
+  </span>
+);
 
 // Input Component
-const Input = ({ placeholder, value, onChange, onKeyPress, className = '' }) => {
-  return (
-    <input
-      type="text"
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      onKeyPress={onKeyPress}
-      className={`px-4 py-3 bg-gray-200/50 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-purple-400 font-light text-lg ${className}`}
-    />
-  );
-};
+const Input = ({ placeholder, value, onChange, onKeyPress, className = '' }) => (
+  <input
+    type="text"
+    placeholder={placeholder}
+    value={value}
+    onChange={onChange}
+    onKeyPress={onKeyPress}
+    className={`px-4 py-3 bg-gray-200/50 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-purple-400 font-light text-lg ${className}`}
+  />
+);
 
 // Idea Card Component
-const IdeaCard = ({ idea, onLike }) => {
-  return (
-    <div className="bg-white rounded-[51px] shadow-lg p-8">
-      <div className="flex items-start gap-4">
-        <Avatar initials={idea.author} size="md" />
-        
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-normal">{idea.title}</h3>
-            <TagBadge tag={idea.tag} />
+const IdeaCard = ({ idea, onLike }) => (
+  <div className="bg-white rounded-[51px] shadow-lg p-8">
+    <div className="flex items-start gap-4">
+      <Avatar initials={idea.author} size="md" />
+      <div className="flex-1">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-normal">{idea.title}</h3>
+          <TagBadge tag={idea.tag} />
+        </div>
+        <div className="w-full h-[1px] bg-black mb-3"></div>
+        <p className="text-gray-800 mb-4 leading-relaxed font-normal">{idea.content}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6 text-gray-600">
+            <button 
+              onClick={() => onLike(idea.id)}
+              className={`flex items-center gap-2 hover:text-gray-900 transition ${idea.liked ? 'text-purple-600' : ''}`}
+            >
+              <ThumbsUp className={`w-5 h-5 ${idea.liked ? 'fill-purple-600' : ''}`} />
+              <span className="text-sm">{idea.likes}</span>
+            </button>
+            <button className="flex items-center gap-2 hover:text-gray-900 transition">
+              <MessageSquare className="w-5 h-5" />
+              <span className="text-sm">{idea.replies} replies</span>
+            </button>
           </div>
-          
-          <div className="w-full h-[1px] bg-black mb-3"></div>
-          
-          <p className="text-gray-800 mb-4 leading-relaxed font-normal">{idea.content}</p>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6 text-gray-600">
-              <button 
-                onClick={() => onLike(idea.id)}
-                className={`flex items-center gap-2 hover:text-gray-900 transition ${idea.liked ? 'text-purple-600' : ''}`}
-              >
-                <ThumbsUp className={`w-5 h-5 ${idea.liked ? 'fill-purple-600' : ''}`} />
-                <span className="text-sm">{idea.likes}</span>
-              </button>
-              
-              <button className="flex items-center gap-2 hover:text-gray-900 transition">
-                <MessageSquare className="w-5 h-5" />
-                <span className="text-sm">{idea.replies} replies</span>
-              </button>
-            </div>
-            
-            <div className="text-sm text-gray-600">{idea.time}</div>
-          </div>
+          <div className="text-sm text-gray-600">{idea.time}</div>
         </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 // Sidebar Menu Item Component
-const SidebarMenuItem = ({ icon: Icon, title, description, active = false }) => {
-  return (
-    <div className={`bg-white/70 rounded-lg p-4 flex items-start gap-3 ${active ? 'border-3 border-purple-600' : ''}`}>
-      <Icon className="w-8 h-8 flex-shrink-0 text-black" />
-      <div>
-        <div className="font-normal text-lg text-black">{title}</div>
-        <div className="text-sm text-gray-800">{description}</div>
-      </div>
+const SidebarMenuItem = ({ icon: Icon, title, description, active = false }) => (
+  <div className={`bg-white/70 rounded-lg p-4 flex items-start gap-3 ${active ? 'border-3 border-purple-600' : ''}`}>
+    <Icon className="w-8 h-8 flex-shrink-0 text-black" />
+    <div>
+      <div className="font-normal text-lg text-black">{title}</div>
+      <div className="text-sm text-gray-800">{description}</div>
     </div>
-  );
-};
+  </div>
+);
 
 // Main Component
 export default function CollaborationIdeas() {
+  const navigate = useNavigate(); // <-- Add navigation
+
   const [ideas, setIdeas] = useState([
-    {
-      id: 1,
-      author: 'JR',
-      title: 'Migration of to new IDE',
-      content: 'I have recently heard about a new IDE that i believe would assist with our projects what do you guys think of moving our projects to it?',
-      tag: 'Software',
-      likes: 20,
-      replies: 3,
-      time: '09:17 AM',
-      liked: false
-    },
-    {
-      id: 2,
-      author: 'ME',
-      title: 'New management',
-      content: 'As we all know our previous group leader has quit so therefor I believe we should host a voting for a new leader on Friday.',
-      tag: 'Organisation',
-      likes: 14,
-      replies: 6,
-      time: '09:24 AM',
-      liked: false
-    },
-    {
-      id: 3,
-      author: 'JR',
-      title: 'Migration of to new IDE',
-      content: 'I have recently heard about a new IDE that i believe would assist with our projects what do you guys think of moving our projects to it?',
-      tag: 'Software',
-      likes: 20,
-      replies: 3,
-      time: '09:17 AM',
-      liked: false
-    }
+    { id: 1, author: 'JR', title: 'Migration of to new IDE', content: 'I have recently heard about a new IDE that i believe would assist with our projects what do you guys think of moving our projects to it?', tag: 'Software', likes: 20, replies: 3, time: '09:17 AM', liked: false },
+    { id: 2, author: 'ME', title: 'New management', content: 'As we all know our previous group leader has quit so therefor I believe we should host a voting for a new leader on Friday.', tag: 'Organisation', likes: 14, replies: 6, time: '09:24 AM', liked: false },
+    { id: 3, author: 'JR', title: 'Migration of to new IDE', content: 'I have recently heard about a new IDE that i believe would assist with our projects what do you guys think of moving our projects to it?', tag: 'Software', likes: 20, replies: 3, time: '09:17 AM', liked: false }
   ]);
 
   const [newIdeaTitle, setNewIdeaTitle] = useState('');
@@ -279,11 +238,11 @@ export default function CollaborationIdeas() {
 
           {/* Bottom Navigation Buttons */}
           <div className="mt-4 flex gap-3">
-            <Button variant="primary" className="flex-1 rounded-[4px]">
+            <Button variant="primary" className="flex-1 rounded-[4px]" onClick={() => navigate('/home-page')}>
               Home
             </Button>
-            <Button variant="secondary" className="flex-1 rounded-[4px]">
-              CollabZone
+            <Button variant="secondary" className="flex-1 rounded-[4px]" onClick={() => navigate('/home-page/MyDeskPage')}>
+              MyDesk
             </Button>
           </div>
         </aside>
