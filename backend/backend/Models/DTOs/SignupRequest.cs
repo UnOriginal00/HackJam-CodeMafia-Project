@@ -14,7 +14,7 @@ namespace backend.Models.DTOs
         [Required, MinLength(8)]
         public string Password { get; set; }
         [Required]
-        public int PhoneNumber { get; set; }
-
+        // keep phone as string to match DB and model (accept formatted numbers)
+        public string PhoneNumber { get; set; }
     }
 }

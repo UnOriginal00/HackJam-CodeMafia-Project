@@ -16,6 +16,7 @@ namespace backend.Data
         public DbSet<Votes> votes { get; set; }
         public DbSet<Notes> notes { get; set; }
         public DbSet<User_Groups> UserGroups { get; set; }
+        public DbSet<GroupInvite> GroupInvites { get; set; } // New DbSet for GroupInvite
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -48,6 +49,14 @@ namespace backend.Data
                 .Property(v => v.VoteTypeRaw)
                 .HasColumnName("vote_type")
                 .HasMaxLength(10);
+
+            modelBuilder.Entity<GroupInvite>(eb => // Configuration for GroupInvite
+            {
+                eb.HasKey(i => i.InviteId);
+                eb.Property(i => i.Status).HasMaxLength(32);
+                eb.HasIndex(i => new { i.RecipientUserId });
+                eb.HasIndex(i => new { i.GroupId });
+            });
         }
     }
 }

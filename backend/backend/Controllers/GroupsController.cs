@@ -180,5 +180,113 @@ namespace backend.Controllers
                 return StatusCode(500, new { message = "Failed to fetch groups.", detail = ex.Message });
             }
         }
+
+        // GET /api/groups/{groupId}/members
+        [HttpGet("{groupId}/members")]
+        public async Task<IActionResult> GetGroupMembers(int groupId)
+        {
+            if (groupId <= 0) return BadRequest(new { message = "Invalid groupId" });
+
+            try
+            {
+                var members = await _groupsService.GetGroupMembersAsync(groupId);
+                return Ok(members);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to fetch members.", detail = ex.Message });
+            }
+        }
+
+        // ADDITIONAL ENDPOINTS
+
+        // POST /api/groups/{groupId}/invite
+        [Authorize]
+        [HttpPost("{groupId}/invite")]
+        public async Task<IActionResult> InviteToGroup(int groupId, [FromBody] SendInviteRequest request)
+        {
+            if (request == null) return BadRequest(new { message = "Request body required." });
+            // ensure path and body groupId align
+            if (groupId != request.GroupId) return BadRequest(new { message = "groupId mismatch." });
+
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+            if (idClaim == null) return Unauthorized(new { message = "User id claim missing." });
+            if (!int.TryParse(idClaim.Value, out var senderUserId)) return BadRequest(new { message = "Invalid user id in claims." });
+
+            try
+            {
+                var invite = await _groupsService.SendInviteAsync(request, senderUserId);
+                return CreatedAtAction(null, new { inviteId = invite.InviteId }, invite);
+            }
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Failed to send invite.", detail = ex.Message }); }
+        }
+
+        // GET /api/groups/invites/me
+        [Authorize]
+        [HttpGet("invites/me")]
+        public async Task<IActionResult> GetMyInvites()
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+            if (idClaim == null) return Unauthorized(new { message = "User id claim missing." });
+            if (!int.TryParse(idClaim.Value, out var userId)) return BadRequest(new { message = "Invalid user id in claims." });
+
+            try
+            {
+                var invites = await _groupsService.GetInvitesForUserAsync(userId);
+                return Ok(invites);
+            }
+            catch (Exception ex) { return StatusCode(500, new { message = "Failed to fetch invites.", detail = ex.Message }); }
+        }
+
+        // POST /api/groups/invites/{inviteId}/accept
+        [Authorize]
+        [HttpPost("invites/{inviteId}/accept")]
+        public async Task<IActionResult> AcceptInvite(int inviteId)
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+            if (idClaim == null) return Unauthorized(new { message = "User id claim missing." });
+            if (!int.TryParse(idClaim.Value, out var userId)) return BadRequest(new { message = "Invalid user id in claims." });
+
+            try
+            {
+                await _groupsService.AcceptInviteAsync(inviteId, userId);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Failed to accept invite.", detail = ex.Message }); }
+        }
+
+        // POST /api/groups/invites/{inviteId}/decline
+        [Authorize]
+        [HttpPost("invites/{inviteId}/decline")]
+        public async Task<IActionResult> DeclineInvite(int inviteId)
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+            if (idClaim == null) return Unauthorized(new { message = "User id claim missing." });
+            if (!int.TryParse(idClaim.Value, out var userId)) return BadRequest(new { message = "Invalid user id in claims." });
+
+            try
+            {
+                await _groupsService.DeclineInviteAsync(inviteId, userId);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return NotFound(new { message = ex.Message }); }
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Failed to decline invite.", detail = ex.Message }); }
+        }
     }
 }

@@ -9,14 +9,20 @@ namespace backend.Models
         [Key]
         [Column("idea_id")]
         public int IdeaId { get; set; }
+
+        // allow null for personal ideas
         [Column("group_id")]
-        public int GroupID { get; set; }
+        public int? GroupID { get; set; }
+
         [Column("user_id")]
         public int UserID { get; set; }
+
         [Column("title")]
         public string Title { get; set; }
+
         [Column("content")]
         public string Content { get; set; }
+
         [Column("created_at")]
         public DateTime CreatedDate { get; set; }
     }

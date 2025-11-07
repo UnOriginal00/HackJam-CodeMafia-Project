@@ -4,6 +4,8 @@ using backend.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace backend.Controllers
 {
@@ -136,6 +138,36 @@ namespace backend.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Failed to fetch ideas.", detail = ex.Message });
+            }
+        }
+
+        // NEW: GET /api/ideas/me - personal ideas for authenticated user
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyPersonalIdeas()
+        {
+            try
+            {
+                var idClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("nameid") ?? User.FindFirst("sub");
+                if (idClaim == null) return Unauthorized(new { message = "User id claim missing." });
+
+                if (!int.TryParse(idClaim.Value, out var userId))
+                    return BadRequest(new { message = "Invalid user id in claims." });
+
+                var list = await _ideasService.GetPersonalIdeasForUserAsync(userId);
+                return Ok(list);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to fetch personal ideas.", detail = ex.Message });
             }
         }
     }

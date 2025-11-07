@@ -5,8 +5,9 @@ namespace backend.Models.DTOs
 {
     public class IdeaCreateRequest
     {
+        // make group optional for personal ideas
         [JsonPropertyName("groupID")]
-        public int GroupID { get; set; }
+        public int? GroupID { get; set; }
 
         [JsonPropertyName("userID")]
         public int UserID { get; set; }

@@ -3,11 +3,14 @@ using backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class VotesController : ControllerBase
     {
         private readonly VotesService _votesService;
@@ -22,6 +25,15 @@ namespace backend.Controllers
         public async Task<IActionResult> CastVote([FromBody] VoteRequest request)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            // Prefer server-side user id from the authenticated JWT claims.
+            // This avoids trusting a client-supplied userID and ensures votes are recorded
+            // for the authenticated user.
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("nameid") ?? User.FindFirst("sub");
+            if (idClaim != null && int.TryParse(idClaim.Value, out var claimedUserId))
+            {
+                request.UserID = claimedUserId;
+            }
 
             try
             {

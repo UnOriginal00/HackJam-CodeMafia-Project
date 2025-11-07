@@ -24,6 +24,7 @@ namespace backend
             builder.Services.AddScoped<GroupsService>();
             builder.Services.AddScoped<IdeasService>();
             builder.Services.AddScoped<VotesService>();
+            builder.Services.AddScoped<DashboardService>();
 
             // Configure EF Core with MySQL
             builder.Services.AddDbContext<HackJamDbContext>(options =>

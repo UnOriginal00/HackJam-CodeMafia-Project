@@ -27,12 +27,16 @@ namespace backend.Services
             var userExists = await _context.Users.AnyAsync(u => u.UserId == request.UserID);
             if (!userExists) throw new InvalidOperationException("User does not exist.");
 
-            var groupExists = await _context.group_Lists.AnyAsync(g => g.GroupId == request.GroupID);
-            if (!groupExists) throw new InvalidOperationException("Group does not exist.");
+            // If a group id is supplied, validate it; otherwise treat as personal idea.
+            if (request.GroupID.HasValue)
+            {
+                var groupExists = await _context.group_Lists.AnyAsync(g => g.GroupId == request.GroupID.Value);
+                if (!groupExists) throw new InvalidOperationException("Group does not exist.");
+            }
 
             var idea = new Ideas
             {
-                GroupID = request.GroupID,
+                GroupID = request.GroupID, // can be null for personal notes
                 UserID = request.UserID,
                 Title = request.Title,
                 Content = request.Content,
@@ -101,5 +105,22 @@ namespace backend.Services
                 .OrderByDescending(i => i.CreatedDate)
                 .ToListAsync();
         }
+
+        // NEW: return personal ideas for a user (GroupID IS NULL)
+        public async Task<IEnumerable<Ideas>> GetPersonalIdeasForUserAsync(int userId)
+        {
+            if (userId <= 0) throw new ArgumentException("Invalid user id.", nameof(userId));
+
+            var userExists = await _context.Users.AnyAsync(u => u.UserId == userId);
+            if (!userExists) throw new InvalidOperationException("User does not exist.");
+
+            return await _context.ideas
+                .AsNoTracking()
+                .Where(i => i.UserID == userId && i.GroupID == null)
+                .OrderByDescending(i => i.CreatedDate)
+                .ToListAsync();
+        }
+
+        // existing methods (GetByIdAsync, UpdateIdeaAsync, DeleteIdeaAsync) remain compatible
     }
 }
