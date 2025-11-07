@@ -12,16 +12,17 @@ namespace backend.Models
         public int UserId { get; set; }
 
         [Column("name")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [Column("surname")]
-        public string Surname { get; set; }
+        public string Surname { get; set; } = string.Empty;
 
         [Column("email")]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
+        // Change to string to match DB VARCHAR phone columns
         [Column("phone_number")]
-        public int PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
 
         [Column("joined_at")]
         public DateTime JoinedAt { get; set; }

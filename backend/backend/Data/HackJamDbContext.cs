@@ -1,14 +1,11 @@
 ﻿using backend.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography.X509Certificates;
 
 namespace backend.Data
 {
     public class HackJamDbContext : DbContext
-    {  
-        public HackJamDbContext(DbContextOptions<HackJamDbContext> options) : base(options)
-        {
-        }
+    {
+        public HackJamDbContext(DbContextOptions<HackJamDbContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
         public DbSet<User_Details> UserDetails { get; set; }
@@ -19,21 +16,19 @@ namespace backend.Data
         public DbSet<Votes> votes { get; set; }
         public DbSet<Notes> notes { get; set; }
         public DbSet<User_Groups> UserGroups { get; set; }
+        public DbSet<GroupInvite> GroupInvites { get; set; } // New DbSet for GroupInvite
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // one-to-one user -> user_details
             modelBuilder.Entity<User>()
                 .HasOne(u => u.UserDetail)
                 .WithOne(d => d.User)
                 .HasForeignKey<User_Details>(d => d.UserId);
 
-            // explicit unique index for group_name (keeps model + DB intent aligned)
             modelBuilder.Entity<Group_List>()
                 .HasIndex(g => g.GroupName)
-                .IsUnique();
+                .IsUnique(false);
 
-            // configure composite key for user_groups and relationships
             modelBuilder.Entity<User_Groups>()
                 .HasKey(ug => new { ug.UserId, ug.GroupId });
 
@@ -48,6 +43,20 @@ namespace backend.Data
                 .WithMany(g => g.Members)
                 .HasForeignKey(ug => ug.GroupId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Map Votes.VoteTypeRaw <-> DB ENUM('up','down') stored in vote_type
+            modelBuilder.Entity<Votes>()
+                .Property(v => v.VoteTypeRaw)
+                .HasColumnName("vote_type")
+                .HasMaxLength(10);
+
+            modelBuilder.Entity<GroupInvite>(eb => // Configuration for GroupInvite
+            {
+                eb.HasKey(i => i.InviteId);
+                eb.Property(i => i.Status).HasMaxLength(32);
+                eb.HasIndex(i => new { i.RecipientUserId });
+                eb.HasIndex(i => new { i.GroupId });
+            });
         }
     }
 }

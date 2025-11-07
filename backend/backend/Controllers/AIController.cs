@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Diagnostics;
+using backend.Services;
 
 namespace backend.Controllers
 {
@@ -10,11 +11,13 @@ namespace backend.Controllers
     public class AIController : ControllerBase
     {
         private readonly HttpClient _httpClient;
-        private readonly string _fastApiBaseUrl = "http://10.143.137.19";
+        private readonly string _fastApiBaseUrl = "http://10.143.135.152";
+        private readonly AIService _aiService;
 
-        public AIController(IHttpClientFactory httpClientFactory)
+        public AIController(IHttpClientFactory httpClientFactory, AIService aiService)
         {
             _httpClient = httpClientFactory.CreateClient();
+            _aiService = aiService;
         }
 
         [HttpGet("ping-ai")]
@@ -91,8 +94,17 @@ namespace backend.Controllers
         [HttpPost("upload")]
         public async Task<IActionResult> UploadNote([FromBody] backend.Models.DTOs.NoteDto note)
         {
-            // Save to DB or process as needed
-            return Ok(new { message = "Note received successfully." });
+            if (note == null) return BadRequest(new { message = "Note body required." });
+
+            try
+            {
+                var path = await _aiService.SaveNoteAsync(note);
+                return Ok(new { message = "Note received successfully.", path });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to save note.", detail = ex.Message });
+            }
         }
     }
 }

@@ -1,7 +1,5 @@
 ﻿using backend.Models.DTOs;
 using backend.Services;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
@@ -10,7 +8,6 @@ namespace backend.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
-
         private readonly AuthenticationService _authService;
 
         public AuthenticationController(AuthenticationService authService)
@@ -31,19 +28,36 @@ namespace backend.Controllers
 
             return Ok(new { message = result });
         }
-        //localhost/api/login
+
+        // login now returns a JWT token
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] backend.Models.DTOs.LoginRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _authService.LoginAsync(request);
-
-            if (result == null)
+            var user = await _authService.LoginAsync(request); // returns User?
+            if (user == null)
                 return Unauthorized(new { message = "Invalid email or password." });
 
-            return Ok(new { message = "Login successful." });
+            // include basic profile fields in token creation and response
+            var token = _authService.GenerateJwtToken(
+                user.UserId,
+                user.Email,
+                user.UserDetail?.Name, // Changed from FullName to Name
+                user.GroupId
+            );
+
+            var profile = new
+            {
+                user.UserId,
+                user.Email,
+                GroupId = user.GroupId,
+                // adapt to whatever UserDetail properties you have:
+                Name = user.UserDetail?.Name
+            };
+
+            return Ok(new { token, profile });
         }
     }
 }

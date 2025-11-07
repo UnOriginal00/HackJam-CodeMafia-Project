@@ -2,6 +2,9 @@ using backend.Data;
 using backend.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace backend
 {
@@ -13,23 +16,49 @@ namespace backend
 
             // Add services to the container.
             builder.Services.AddControllers();
-            // OpenAPI / Swagger
             builder.Services.AddOpenApi();
-            // DI for Chat Service (keep only what's needed for chats)
+
+            // DI registrations
+            builder.Services.AddScoped<AuthenticationService>();
             builder.Services.AddScoped<ChatService>();
-            // Register GroupsService so Controllers can resolve it
             builder.Services.AddScoped<GroupsService>();
+            builder.Services.AddScoped<IdeasService>();
+            builder.Services.AddScoped<VotesService>();
+            builder.Services.AddScoped<DashboardService>();
 
             // Configure EF Core with MySQL
             builder.Services.AddDbContext<HackJamDbContext>(options =>
                 options.UseMySql(builder.Configuration.GetConnectionString("HackJamDb"),
-                    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
-                
+                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("HackJamDb"))));
 
+            // JWT configuration
+            var jwtSection = builder.Configuration.GetSection("Jwt");
+            var key = Encoding.UTF8.GetBytes(jwtSection["Key"] ?? throw new InvalidOperationException("JWT Key missing in config"));
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false; // set true in production
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSection["Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = jwtSection["Audience"],
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ClockSkew = TimeSpan.FromMinutes(2)
+                };
+            });
 
             builder.Services.AddHttpClient();
 
-            // Allow all CORS for simple testing (adjust for production)
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
@@ -39,9 +68,6 @@ namespace backend
                           .AllowAnyHeader();
                 });
             });
-
-            // NOTE: Authentication removed to keep things simple.
-            // Controllers should not require [Authorize] if you want unrestricted chat posting.
 
             var app = builder.Build();
 
@@ -53,7 +79,6 @@ namespace backend
                 Console.WriteLine($"Can connect to DB: {db.Database.CanConnect()}");
             }
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -67,12 +92,11 @@ namespace backend
 
             app.UseHttpsRedirection();
 
-            // Authentication/Authorization removed for simplicity:
-            // app.UseAuthentication();
-            // app.UseAuthorization();
+            // IMPORTANT: authentication before authorization and before controllers
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllers();
-
             app.Run();
         }
     }

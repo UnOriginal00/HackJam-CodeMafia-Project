@@ -5,16 +5,24 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Services
 {
     public class AuthenticationService
     {
         private readonly HackJamDbContext _context;
+        private readonly IConfiguration _config;
 
-        public AuthenticationService(HackJamDbContext context)
+        public AuthenticationService(HackJamDbContext context, IConfiguration config)
         {
             _context = context;
+            _config = config;
         }
         //SignUp User method
         public async Task<string> SignupAsync(SignupRequest request)
@@ -88,5 +96,31 @@ namespace backend.Services
             return user; 
         }
 
+        // Keep your existing SignupAsync / LoginAsync implementations.
+        // Add this helper to generate a JWT for a given user id.
+        public string GenerateJwtToken(int userId, string email, string? name = null, int? groupId = null)
+        {
+            var key = _config["Jwt:Key"];
+            var issuer = _config["Jwt:Issuer"];
+            var audience = _config["Jwt:Audience"];
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, email)
+            };
+            if (!string.IsNullOrEmpty(name)) claims.Add(new Claim(ClaimTypes.Name, name));
+            if (groupId.HasValue) claims.Add(new Claim("group_id", groupId.Value.ToString()));
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            var creds = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                issuer,
+                audience,
+                claims,
+                expires: DateTime.UtcNow.AddHours(4),
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }
