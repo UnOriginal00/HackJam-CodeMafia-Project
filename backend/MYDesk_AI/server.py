@@ -36,3 +36,7 @@ async def handle_user_query(user_input: UserPrompt):
     """Save the prompt for main.py to process."""
     state.write_prompt(user_input.prompt)
     return {"message": "Prompt received and queued for processing."}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"} 
