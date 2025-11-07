@@ -6,6 +6,12 @@ export async function getAllIdeas(groupId) {
   return res.data || [];
 }
 
+// Fetch personal ideas for the authenticated user
+export async function getMyIdeas() {
+  const res = await api.get('/ideas/me');
+  return res.data || [];
+}
+
 // Create a new idea. Expects { title, content, groupID, userID }
 export async function createIdea(payload) {
   // ensure userID exists

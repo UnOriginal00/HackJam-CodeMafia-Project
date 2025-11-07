@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getGroupDetails, renameGroup, deleteGroup } from '../../services/groupsService';
+import { getGroupDetails, renameGroup, deleteGroup, getGroupMembers } from '../../services/groupsService';
 
 export default function GroupSettingsModal({ open, onClose, groupId, onDeleted, onRenamed }) {
   const [loading, setLoading] = useState(false);
@@ -7,6 +7,7 @@ export default function GroupSettingsModal({ open, onClose, groupId, onDeleted, 
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState('');
+  const NAME_MAX = 40;
 
   useEffect(() => {
     let mounted = true;
@@ -15,10 +16,14 @@ export default function GroupSettingsModal({ open, onClose, groupId, onDeleted, 
       setLoading(true);
       setError(null);
       try {
-        const g = await getGroupDetails(groupId);
+        const [g, members] = await Promise.all([
+          getGroupDetails(groupId),
+          getGroupMembers(groupId)
+        ]);
         if (!mounted) return;
         setGroup(g);
         setNewName(g?.groupName ?? g?.GroupName ?? g?.name ?? '');
+        setMembers(members || []);
       } catch (err) {
         console.error(err);
         setError('Failed to load group details');
@@ -29,6 +34,10 @@ export default function GroupSettingsModal({ open, onClose, groupId, onDeleted, 
     load();
     return () => { mounted = false; };
   }, [open, groupId]);
+
+  const [members, setMembers] = useState([]);
+
+  const [showMembers, setShowMembers] = useState(false);
 
   if (!open) return null;
 
@@ -41,6 +50,7 @@ export default function GroupSettingsModal({ open, onClose, groupId, onDeleted, 
     e.preventDefault();
     setError(null);
     if (!newName.trim()) return setError('Name required');
+    if (newName.trim().length > NAME_MAX) return setError(`Name must be ${NAME_MAX} characters or less`);
     try {
       await renameGroup(groupId, newName.trim(), myUserId);
       if (onRenamed) onRenamed(newName.trim());
@@ -77,7 +87,26 @@ export default function GroupSettingsModal({ open, onClose, groupId, onDeleted, 
           </div>
 
           <div>
-            <button className="px-3 py-2 bg-gray-100 rounded" onClick={() => alert('User list placeholder (not implemented)')}>View users</button>
+            <button className="px-3 py-2 bg-gray-100 rounded" onClick={() => setShowMembers(s => !s)}>{showMembers ? 'Hide users' : 'View users'}</button>
+            {showMembers && (
+              <div className="mt-3 max-h-40 overflow-y-auto border rounded p-2 bg-gray-50">
+                {members.length === 0 ? (
+                  <div className="text-sm text-gray-500">No members yet.</div>
+                ) : (
+                  <ul className="space-y-2">
+                    {members.map(m => (
+                      <li key={m.userId} className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium">{(m.name || m.surname) ? `${(m.name||'').charAt(0)}${(m.surname||'').charAt(0)}` : 'U'}</div>
+                        <div className="text-sm">
+                          <div className="font-medium">{(m.name || '') + (m.surname ? ` ${m.surname}` : '')}</div>
+                          <div className="text-xs text-gray-500">{m.email}</div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
 
           {amCreator && (
@@ -88,8 +117,9 @@ export default function GroupSettingsModal({ open, onClose, groupId, onDeleted, 
                   <button onClick={handleDelete} className="px-3 py-2 bg-red-500 text-white rounded">Delete group</button>
                 </div>
               ) : (
-                <form onSubmit={handleRename} className="flex gap-2">
-                  <input value={newName} onChange={(e) => setNewName(e.target.value)} className="flex-1 px-2 py-1 border rounded" />
+                <form onSubmit={handleRename} className="flex gap-2 items-center">
+                  <input value={newName} onChange={(e) => setNewName(e.target.value.slice(0, NAME_MAX))} maxLength={NAME_MAX} className="flex-1 px-2 py-1 border rounded" />
+                  <div className="text-xs text-gray-500">{newName.length}/{NAME_MAX}</div>
                   <button type="submit" className="px-3 py-1 bg-green-600 text-white rounded">Save</button>
                   <button type="button" onClick={() => { setEditing(false); setNewName(group?.groupName ?? ''); }} className="px-3 py-1 border rounded">Cancel</button>
                 </form>

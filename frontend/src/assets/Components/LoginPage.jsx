@@ -22,7 +22,7 @@ export default function LoginPage(){
 
   return(
     <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[15vh]">
-      <form onSubmit={submit} className="bg-[#F0F0F0] rounded-3xl w-[350px] h-[530px] flex flex-col justify-center p-4 font-[Krub]">
+  <form onSubmit={submit} className="bg-[#F0F0F0] rounded-3xl w-[350px] h-[530px] flex flex-col justify-center p-4 font-[Krub] shadow-lg transform transition duration-200 hover:scale-105 hover:shadow-2xl">
         <div className="w-full flex justify-center pt-1">
           <img className="size-16" src={MainLogo} alt="logo" />
         </div>
@@ -49,7 +49,7 @@ export default function LoginPage(){
           <p className="text-violet-400"><u>Forgot Password?</u></p>
         </div>
 
-        <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] rounded-md h-10" type="submit">
+  <button className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] rounded-md h-10 cursor-pointer shadow" type="submit">
           <div className="text-sm flex flex-row justify-center cursor-pointer">Sign In <img className="size-5 pt-0.5 pl-1.5" src={Arrow} alt="arrow" /></div>
         </button>
 

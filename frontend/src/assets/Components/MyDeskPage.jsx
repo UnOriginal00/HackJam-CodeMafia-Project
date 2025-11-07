@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Bell,
-  User,
   FileText,
   Lightbulb,
   MessageSquare,
@@ -9,7 +7,8 @@ import {
   Send,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ProfileSideBar from "./ProfileSideBar";
+import SharedHeader from './SharedHeader';
+import MyDeskIdeas from './MyDeskIdeas';
 
 // Avatar Component
 const Avatar = ({ initials, size = "md" }) => {
@@ -107,18 +106,18 @@ const Button = ({ children, variant = "primary", onClick, className = "" }) => {
   );
 };
 
-export default function CollaborationIdeas() {
+export default function MyDeskPage() {
   const navigate = useNavigate();
+
+  // which view is shown in the main area: 'ideas' | 'ai' | 'chat'
+  const [activeView, setActiveView] = useState('ideas');
 
   // Navigation
   const goHome = () => navigate("/home-page");
   const goCollab = () => navigate("/home-page/Collab");
 
-  // Chat
-  const [messages, setMessages] = useState([
-    { id: 1, author: "JR", content: "Hey team, ready for the meeting?", time: "09:00 AM" },
-    { id: 2, author: "ME", content: "Yes, let’s start!", time: "09:02 AM" },
-  ]);
+  // Chat - start empty; we'll inject an initial AI greeting when entering the chat view
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
   const handleSendMessage = () => {
@@ -136,72 +135,29 @@ export default function CollaborationIdeas() {
     setNewMessage("");
   };
 
-  // Profile sidebar toggle
-  const [showProfile, setShowProfile] = useState(false);
-  const profileRef = useRef(null);
-  const toggleProfileSidebar = () => setShowProfile(!showProfile);
-
-  // Close profile sidebar on outside click
+  // When user opens the chat view, inject an initial AI greeting if none exists
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setShowProfile(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    if (activeView !== 'chat') return;
+    setMessages((prev) => {
+      // if there's already an AI message, do nothing
+      if (prev.some(m => m.isAi)) return prev;
+      const aiMsg = {
+        id: Date.now(),
+        author: 'AI',
+        content: 'Hello — I\'m your AI companion. I can summarise notes, suggest ideas, and help refine prompts. How can I help today?',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isAi: true
+      };
+      return [...prev, aiMsg];
+    });
+  }, [activeView]);
+
+  // Profile dropdown is handled globally by SharedHeader
 
   return (
     <div className="min-h-screen bg-[#FEFEFE]" style={{ fontFamily: "Krub, sans-serif" }}>
-      {/* Header */}
-      <header className="border-b-[0.6px] border-black/75 px-5 py-4">
-        <div className="flex items-center justify-between max-w-[1440px] mx-auto">
-          {/* Logo Section */}
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-r from-orange-400 to-purple-400 rounded-lg flex items-center justify-center">
-              <Lightbulb className="w-8 h-8 text-white" />
-            </div>
-            <h1
-              className="text-4xl font-semibold"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(246, 157, 75, 0.96) 0%, rgba(177, 155, 217, 0.96) 74.04%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              Innovation Lounge
-            </h1>
-          </div>
-
-          {/* User Actions */}
-          <div className="flex items-center gap-6 relative">
-            <div className="relative">
-              <Bell className="w-6 h-6 text-gray-700" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F24822] text-white text-xs rounded-full flex items-center justify-center font-normal">
-                3
-              </span>
-            </div>
-
-            <div className="relative" ref={profileRef}>
-              <button
-                onClick={toggleProfileSidebar}
-                className="w-16 h-16 bg-blue-500 rounded-[21px] flex items-center justify-center overflow-hidden"
-              >
-                <User className="w-8 h-8 text-white" />
-              </button>
-
-              {showProfile && (
-                <div className="absolute top-full right-0 mt-2 z-50">
-                  <ProfileSideBar />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Shared header (contains avatar dropdown) */}
+      <SharedHeader />
 
       {/* Body Layout */}
       <div className="flex max-w-[1440px] mx-auto">
@@ -221,17 +177,21 @@ export default function CollaborationIdeas() {
 
             {/* Menu Items */}
             <div className="space-y-4">
-              <SidebarMenuItem icon={FileText} title="Resources" description="Check out the resources" />
+              <SidebarMenuItem icon={FileText} title="Resources" description="Check out the resources" onClick={() => setActiveView('resources')} active={activeView === 'resources'} />
               <SidebarMenuItem
                 icon={Lightbulb}
                 title="Ideas"
                 description="Note down new ideas"
-                active={true}
+                onClick={() => setActiveView('ideas')}
+                active={activeView === 'ideas'}
               />
+              {/* AI companion moved into the Chat view; sidebar button removed to keep the chat input available */}
               <SidebarMenuItem
                 icon={BotIcon}
-                title="AI companion"
-                description="Your personal AI companion"
+                title="AI Companion"
+                description="Personal AI assistant"
+                onClick={() => setActiveView('chat')}
+                active={activeView === 'chat'}
               />
             </div>
 
@@ -254,39 +214,69 @@ export default function CollaborationIdeas() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 border-l-[0.6px] border-black/75 flex flex-col justify-between">
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto mb-6 space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className="flex items-start gap-3">
-                <Avatar initials={msg.author} size="sm" />
-                <div>
-                  <div className="text-sm text-gray-600">
-                    {msg.author} • {msg.time}
-                  </div>
-                  <div className="bg-gray-200/50 rounded-lg px-4 py-2 mt-1 text-gray-800">
-                    {msg.content}
+          {/* Switch views based on activeView */}
+          <div className="flex-1 overflow-y-auto mb-6">
+            {activeView === 'ideas' && (
+              <div>
+                {/* MyDesk-specific ideas view (personal ideas) */}
+                <MyDeskIdeas />
+              </div>
+            )}
+
+            {/* AI companion header injected into chat view so chat input remains available */}
+
+            {activeView === 'chat' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <div className="text-2xl font-semibold">AI Companion</div>
+                    <div className="text-sm text-gray-600">Personal AI assistant</div>
                   </div>
                 </div>
+                <div className="space-y-4">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className="flex items-start gap-3">
+                      <Avatar initials={msg.author} size="sm" />
+                      <div>
+                        <div className="text-sm text-gray-600">
+                          {msg.author} • {msg.time}
+                        </div>
+                        <div className="bg-gray-200/50 rounded-lg px-4 py-2 mt-1 text-gray-800">
+                          {msg.content}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+
+            {activeView === 'resources' && (
+              <div>
+                <h3 className="text-2xl font-semibold mb-2">Resources</h3>
+                <div className="p-4 rounded-lg bg-white/80 text-gray-800">Resources and links go here.</div>
+              </div>
+            )}
           </div>
 
-          {/* Chat Input */}
-          <div className="flex gap-4">
-            <Input
-              placeholder="Type a message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-              className="flex-1"
-            />
-            <button
-              onClick={handleSendMessage}
-              className="w-[84px] h-16 bg-[#EEEBEF] rounded-lg flex items-center justify-center hover:bg-gray-300 transition"
-            >
-              <Send className="w-8 h-8 text-gray-700" />
-            </button>
-          </div>
+          {/* Bottom composer / input area shown only for chat view */}
+          {activeView === 'chat' && (
+            <div className="flex gap-4">
+              <Input
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                className="flex-1"
+              />
+              <button
+                onClick={handleSendMessage}
+                className="w-[84px] h-16 bg-[#EEEBEF] rounded-lg flex items-center justify-center hover:bg-gray-300 transition"
+              >
+                <Send className="w-8 h-8 text-gray-700" />
+              </button>
+            </div>
+          )}
         </main>
       </div>
     </div>

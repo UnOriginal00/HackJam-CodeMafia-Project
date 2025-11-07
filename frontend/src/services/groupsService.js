@@ -42,6 +42,17 @@ export async function getGroupDetails(groupId) {
   return res.data;
 }
 
+export async function getGroupMembers(groupId) {
+  const res = await api.get(`/groups/${groupId}/members`);
+  return (res.data || []).map(m => ({
+    userId: m.userId ?? m.UserId ?? m.UserID,
+    name: m.name ?? m.Name ?? '',
+    surname: m.surname ?? m.Surname ?? '',
+    email: m.email ?? m.Email ?? '',
+    joinedAt: m.joinedAt ?? m.JoinedAt ?? null
+  }));
+}
+
 // Rename group (caller should be the creator)
 export async function renameGroup(groupId, newName, creatorUserID) {
   const body = { creatorUserID: Number(creatorUserID), groupID: Number(groupId), newName };

@@ -43,8 +43,11 @@ export default function CreateAccount() {
       return;
     }
 
-    const phone = newUser.phoneNumber ? Number(newUser.phoneNumber) : null;
-    if (phone === null || Number.isNaN(phone)) {
+    // Keep phone as a string to match backend DTO (PhoneNumber is defined as string).
+    // Strip non-digit characters for basic validation and formatting (e.g. spaces, dashes).
+    const rawPhone = newUser.phoneNumber ? String(newUser.phoneNumber).trim() : "";
+    const digitsOnly = rawPhone.replace(/\D/g, "");
+    if (!digitsOnly) {
       alert("Please enter a valid phone number");
       return;
     }
@@ -54,7 +57,8 @@ export default function CreateAccount() {
       surName: newUser.surName,
       email: newUser.email,
       password: newUser.password,
-      phoneNumber: phone
+      // send phone as a string (digits-only) to match backend expectations
+      phoneNumber: digitsOnly
     };
 
     setLoading(true);
@@ -74,7 +78,7 @@ export default function CreateAccount() {
     <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center w-screen h-screen pt-[12vh]">
       <form
         onSubmit={submit}
-        className="bg-[#F0F0F0] rounded-3xl w-[365px] h-[580px] flex flex-col justify-center p-4 font-[Krub]"
+        className="bg-[#F0F0F0] rounded-3xl w-[365px] h-[580px] flex flex-col justify-center p-4 font-[Krub] shadow-lg transform transition duration-200 hover:scale-105 hover:shadow-2xl"
       >
         <div className="w-full flex justify-center">
           <img className="size-16" src={MainLogo} alt="logo" />
@@ -164,7 +168,7 @@ export default function CreateAccount() {
         {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
         <button
-          className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8 rounded-md cursor-pointer"
+          className="border-none bg-gradient-to-r from-orange-300 to-violet-400 text-[#000000] h-8 rounded-md cursor-pointer shadow"
           type="submit"
           disabled={loading}
         >

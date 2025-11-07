@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { Lightbulb, Bell, User, FileText, MessageSquare, Settings, Plus } from 'lucide-react';
+import { Lightbulb, FileText, MessageSquare, Settings, Plus, UserPlus } from 'lucide-react';
 import GroupsQuickView from './GroupsQuickView';
 import CreateGroupModal from './CreateGroupModal';
 import GroupSettingsModal from './GroupSettingsModal';
+import InviteModal from './InviteModal';
+import SharedHeader from './SharedHeader';
 
 const Button = ({ children, variant = 'primary', onClick, className = '' }) => {
   const variants = {
@@ -42,34 +44,32 @@ export default function CollabLayout({ children }) {
   const [selectedGroup, setSelectedGroup] = React.useState(null);
   const [createModalOpen, setCreateModalOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+
+  // Accept selectedGroup passed via navigation state (e.g., when sharing from MyDesk)
+  React.useEffect(() => {
+    if (location && location.state && location.state.selectedGroup) {
+      setSelectedGroup(location.state.selectedGroup);
+      // support opening the create modal via navigation state (fallback when outlet context not available)
+      if (location.state.openCreateModal) {
+        setCreateModalOpen(true);
+      }
+      // clear the navigation state so repeated visits don't reapply
+      // Note: navigate with replace clears the state for this entry
+      try {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        // useNavigate is available above; call replace to clear state
+        // but to avoid re-declaring navigate, we use history.replaceState
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-[#FEFEFE]" style={{ fontFamily: 'Krub, sans-serif' }}>
-      <header className="border-b-[0.6px] border-black/75 px-5 py-4">
-        <div className="flex items-center justify-between max-w-[1440px] mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-r from-orange-400 to-purple-400 rounded-lg flex items-center justify-center">
-              <Lightbulb className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-4xl font-semibold" style={{
-              background: 'linear-gradient(90deg, rgba(246, 157, 75, 0.96) 0%, rgba(177, 155, 217, 0.96) 74.04%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
-            }}>
-              Innovation Lounge
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Bell className="w-6 h-6 text-gray-700" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F24822] text-white text-xs rounded-full flex items-center justify-center font-normal">3</span>
-            </div>
-            <div className="w-16 h-16 bg-blue-500 rounded-[21px] flex items-center justify-center overflow-hidden">
-              <User className="w-8 h-8 text-white" />
-            </div>
-          </div>
-        </div>
-      </header>
+      <SharedHeader title="Innovation Lounge" />
 
       <div className="flex max-w-[1440px] mx-auto">
         <aside className="w-[339px] p-5">
@@ -82,7 +82,7 @@ export default function CollabLayout({ children }) {
             <div className="space-y-4">
               {selectedGroup ? (
                 <>
-                  <SidebarMenuItem icon={FileText} title="Resources" description="Check out the resources" onClick={() => navigate('/resources')} active={location.pathname === '/resources'} />
+                  <SidebarMenuItem icon={FileText} title="Resources" description="Check out the resources" onClick={() => navigate('/home-page/Collab/resources')} active={location.pathname === '/home-page/Collab/resources'} />
                   <SidebarMenuItem icon={Lightbulb} title="Ideas" description="Note down new ideas" onClick={() => navigate('/home-page/Collab/ideas')} active={location.pathname === '/home-page/Collab/ideas'} />
                   <SidebarMenuItem icon={MessageSquare} title="General Chat" description="Chat with your group" onClick={() => navigate('/home-page/Collab/chat')} active={location.pathname === '/home-page/Collab/chat'} />
                 </>
@@ -124,7 +124,7 @@ export default function CollabLayout({ children }) {
                 {selectedGroup && (
                   <>
                     <span className="text-gray-500 text-2xl">·</span>
-                    <div className="text-4xl font-light text-white px-4 py-1 rounded-md" style={{ background: 'linear-gradient(90deg, rgba(246, 157, 75, 1) 0%, rgba(177, 155, 217, 1) 74.04%)' }}>
+                    <div className="text-4xl font-light text-white px-4 py-1 rounded-md max-w-[520px] truncate" title={selectedGroup.name} style={{ background: 'linear-gradient(90deg, rgba(246, 157, 75, 1) 0%, rgba(177, 155, 217, 1) 74.04%)' }}>
                       {selectedGroup.name}
                     </div>
                   </>
@@ -133,9 +133,9 @@ export default function CollabLayout({ children }) {
 
               <div className="flex items-center gap-3">
                 <GroupsQuickView onSelect={(g) => { setSelectedGroup(g); navigate('/home-page/Collab/ideas'); }} selectedGroupId={selectedGroup?.groupId} />
+                <button onClick={() => setInviteOpen(true)} title="Invite user to group" className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow hover:opacity-90 transition bg-gradient-to-br from-green-400 to-emerald-500"><UserPlus className="w-5 h-5" /></button>
                 <button onClick={() => setCreateModalOpen(true)} className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow hover:opacity-90 transition" style={{ background: 'linear-gradient(317.49deg, rgba(246, 157, 75, 0.9) 23.12%, rgba(206, 168, 163, 0.9) 30.11%, rgba(166, 179, 250, 0.9) 40.46%, rgba(189, 181, 253, 0.9) 55.21%)' }}><Plus className="w-6 h-6 stroke-[4px]" /></button>
                 <CreateGroupModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} onCreated={(g) => {
-                  // normalize returned group and select it
                   const norm = {
                     groupId: g.groupId ?? g.groupId ?? g.GroupId,
                     name: g.groupName ?? g.groupName ?? g.GroupName ?? g.group_name ?? g.GroupName,
@@ -146,15 +146,18 @@ export default function CollabLayout({ children }) {
                   navigate('/home-page/Collab/ideas');
                 }} />
                 <GroupSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} groupId={selectedGroup?.groupId} onDeleted={() => {
-                  // after delete, clear selection and navigate back to groups index
                   setSelectedGroup(null);
                   setSettingsOpen(false);
                   navigate('/home-page/Collab');
                 }} onRenamed={(newName) => {
-                  // update local selectedGroup name
                   setSelectedGroup(prev => prev ? { ...prev, name: newName } : prev);
                 }} />
               </div>
+
+              <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} groupId={selectedGroup?.groupId} onSent={(invite) => {
+                setInviteOpen(false);
+                try { window?.dispatchEvent(new CustomEvent('invite:sent', { detail: invite })); } catch (e) {}
+              }} />
             </div>
           </div>
 
@@ -162,7 +165,7 @@ export default function CollabLayout({ children }) {
           <div className="flex">
             <div className="w-full">
               {children ? (React.isValidElement(children) ? React.cloneElement(children, { selectedGroup, setSelectedGroup }) : children)
-                : <Outlet context={{ selectedGroup, setSelectedGroup }} />}
+                : <Outlet context={{ selectedGroup, setSelectedGroup, setCreateModalOpen, setInviteOpen }} />}
             </div>
 
             {/* Render features panel only when a group is selected */}

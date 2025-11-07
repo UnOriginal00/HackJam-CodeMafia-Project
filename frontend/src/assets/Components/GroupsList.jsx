@@ -53,7 +53,14 @@ export default function GroupsList() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
               {groups.map(g => (
                 <button key={g.groupId} onClick={() => enterGroup(g)} className="flex flex-col items-center p-4 bg-transparent hover:scale-105 transform transition">
-                  <div className="w-20 h-20 rounded-full bg-black mb-2 shadow-inner" aria-hidden="true" />
+                  {/* Avatar: show initial letter in a colored circle instead of a plain black placeholder */}
+                  <div
+                    className="w-20 h-20 rounded-full bg-indigo-600 mb-2 shadow-inner flex items-center justify-center"
+                    aria-hidden="false"
+                    aria-label={g.name ? `Group ${g.name}` : 'Group'}
+                  >
+                    <span className="text-white font-semibold text-2xl">{(g.name && g.name[0]) ? g.name[0].toUpperCase() : 'G'}</span>
+                  </div>
                   <div className="text-center text-sm font-medium text-gray-900">{g.name}</div>
                 </button>
               ))}

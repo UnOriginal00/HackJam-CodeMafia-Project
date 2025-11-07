@@ -1,8 +1,8 @@
-import UserIcon from "../Icons/User-Icons/UserIcon.svg"
-import MainLogo from "../Icons/MainLogo2.svg"
 import SettingsIcon from "../Icons/SettingsIcon.svg"
 import UploadIcon from "../Icons/UploadResourcesIcon.svg"
 import NotesIcon from "../Icons/NotesIcon.svg"
+import { Lightbulb } from 'lucide-react'
+import SharedHeader from './SharedHeader'
 import CollabIcon from "../Icons/Home-Page-Icons/image 5.svg"
 import MyDeskIcon from "../Icons/Home-Page-Icons/image 6.svg"
 import ClockIcon from "../Icons/Home-Page-Icons/Clock Icon.svg"
@@ -20,18 +20,10 @@ export default function HomePage() {
   return (
     <div className="bg-gradient-to-br from-violet-400 via-violet-400 to-orange-400 flex justify-center items-center w-screen h-screen">
       {/* Main container */}
-      <div className="bg-[#F0F0F0] w-full h-full flex flex-col items-center font-[Krub] overflow-y-auto p-8">
+  <div className="bg-white w-full h-full flex flex-col items-center font-[Krub] overflow-y-auto p-8">
 
-        {/* Header */}
-        <div className="w-full flex justify-between items-center bg-gradient-to-l from-violet-300 via-violet-300 to-orange-300 rounded-md py-3 px-6 shadow-sm">
-          <div className="flex items-center">
-            <img className="w-10 h-10" src={MainLogo} />
-            <strong className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-violet-400 ml-2">
-              Innovation Lounge
-            </strong>
-          </div>
-          <img className="w-10 h-10" src={UserIcon} />
-        </div>
+        {/* Shared header */}
+        <SharedHeader />
 
         {/* Subtitle */}
         <p className="self-start mt-4 text-sm bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-violet-400">
@@ -42,9 +34,9 @@ export default function HomePage() {
         <div className="flex flex-col items-center w-full mt-8 space-y-10 max-w-[1200px]">
 
           {/* Collaboration Card */}
-          <div className="relative w-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-violet-400 rounded-2xl p-[3px]" />
-            <div className="relative bg-[#F0F0F0] rounded-2xl p-8 flex flex-col items-center space-y-3 shadow-md">
+          <div className="w-full">
+            <div className="bg-gradient-to-r from-orange-400 to-violet-400 rounded-2xl p-[3px]">
+              <div className="bg-white rounded-2xl p-8 flex flex-col items-center space-y-3">
               <div className="flex items-center justify-center space-x-3">
                 <img className="w-10 h-10" src={CollabIcon} />
                 <h1 className="text-xl font-semibold text-center">Join Our Collaboration Community Now.</h1>
@@ -58,13 +50,14 @@ export default function HomePage() {
               >
                 Come Collab Now
               </button>
+              </div>
             </div>
           </div>
 
           {/* My Desk Card */}
-          <div className="relative w-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-violet-400 rounded-2xl p-[3px]" />
-            <div className="relative bg-[#F0F0F0] rounded-2xl p-8 flex flex-col items-center space-y-3 shadow-md">
+          <div className="w-full">
+            <div className="bg-gradient-to-r from-orange-400 to-violet-400 rounded-2xl p-[3px]">
+              <div className="bg-white rounded-2xl p-8 flex flex-col items-center space-y-3">
               <div className="flex items-center justify-center space-x-3">
                 <img className="w-10 h-10" src={MyDeskIcon} />
                 <h1 className="text-xl font-semibold text-center">Check Out My Desk Feature.</h1>
@@ -78,13 +71,14 @@ export default function HomePage() {
               >
                 Look At My Desk
               </button>
+              </div>
             </div>
           </div>
 
           {/* Trending Topics */}
-          <div className="relative w-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-violet-400 rounded-2xl p-[3px]" />
-            <div className="relative bg-[#F0F0F0] rounded-2xl p-8 flex flex-col items-center space-y-3 shadow-md">
+          <div className="w-full">
+            <div className="bg-gradient-to-r from-orange-400 to-violet-400 rounded-2xl p-[3px]">
+              <div className="bg-white rounded-2xl p-8 flex flex-col items-center space-y-3">
               <div className="flex items-center justify-center space-x-3">
                 <img className="w-10 h-10" src={ClockIcon} />
                 <h1 className="text-xl font-semibold">Trending Topics</h1>
@@ -92,6 +86,7 @@ export default function HomePage() {
               <div className="overflow-auto h-44 flex justify-center space-x-6">
                 <TredingTopics />
                 <TredingTopics />
+              </div>
               </div>
             </div>
           </div>
